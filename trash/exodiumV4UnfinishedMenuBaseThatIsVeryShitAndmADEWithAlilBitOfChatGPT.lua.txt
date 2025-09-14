@@ -1,0 +1,851 @@
+local sv_skyname = API.GetConVar("sv_skyname")
+local fov_desired = API.GetConVar("fov_desired")
+local Gradient_Up = Material("gui/gradient_up")
+local Gui = {}
+local surf = {}
+local Util = {
+    Menu = nil,
+    TabSheet = nil,
+    Panel = nil,
+    Panels = {},
+    dockPanel = nil,
+    ColorButt = nil,
+    ColPanel = nil,
+    colorpicker = nil,
+    binder = nil,
+    combo = nil,
+    slider = nil,
+    label = nil,
+    dihtton = nil,
+    container = nil,
+    Avatar = nil,
+}
+
+local MenuSettings = {
+    ConfigTable = {
+        MainTheme = Color(255,0,255,255),
+        FeatureWarning = Color(255,255,0,255),
+        Gradient = Color(0,0,0,211),
+        hitgroupToAimAt = {
+            Visible = "Head",
+            Methods = {"Head","Tits","Stomach"}
+        },
+        AimbotMethods = { 
+            Visible = "Silent",
+            Methods = {"Normal","Silent","pSilent"}
+        },
+        CompenSationMethod = {
+            Visible = "On Aimbot",
+            Methods = {"On Aimbot", "Allways On"}
+        },
+        ESPBoxes = {
+            Visible = "2D",
+            Methods = {"2D", "3D"}
+        },
+        HealthShit = {
+            Visible = "Health Bar",
+            Methods = {"Default", "Default and Text"}
+        },
+        ChamsMaterials = {
+            Visible = "Glow",
+            Methods = {"Glow","Wire Frame","Pulse Frame","Dark Matter", "Flat"}
+        },
+        WeaponChamsMaterials = {
+            Visible = "Glow",
+            Methods = {"Glow","Wire Frame","Pulse Frame","Dark Matter", "Flat"}
+        },
+        BulletTracers = {
+            Visible = "Zap",
+            Methods = {"Zap","Regular"}
+        },
+        BulletImpacts = {
+            Visible = "Rectangular",
+            Methods = {"Rectangular","Cirlce"}
+        },
+        Skyboxes = { 
+            Visible = sv_skyname:GetName(),
+            Methods = {}
+        },
+        AntiAimYawReal = {
+            Visible = "Spin",
+            Methods = {"Spin","Jitter", "Side Ways"}
+        },
+        AntiAimYawFake = {
+            Visible = "Down",
+            Methods = {"Down", "Up", "Flicker", "static"},
+        },
+        AutoStrafeMethods = {
+            Visible = "Directional",
+            Methods = {"Directional", "Rage", "Legit"},
+        },
+        MenuPresets = {
+            Visible = "Default",
+            Methods = {"Default", "White", "Dark", "Blue", "Purple", "Gothic"},
+        }
+    },
+    tabs = {
+        { Key = "Aim", Name = "Aim" },
+        { Key = "Rage", Name = "Rage" },
+        { Key = "Visuals", Name = "Visuals" },
+        { Key = "Settings", Name = "Settings" },
+        { Key = "Player List", Name = "Player List" },
+    }
+}
+
+local Docks = {
+    Dock = { LEFT, RIGHT }, 
+    Names = { "Left", "Right" }, 
+}
+
+surface.CreateFont("CloseButton", {
+    font = "CloseCaption_Normal", 
+	extended = false,
+	size = 24,
+	weight = 300,
+	outline = true,
+})
+
+surface.CreateFont("MenuFont", { 
+    font = "Tahoma", 
+    size = 13, 
+    outline = false, 
+    antialiss = false 
+})
+
+function surf:DrawText(Col,x,y,font,txt)
+    surface.SetTextColor(Col)
+    surface.SetTextPos(x, y)
+    surface.SetFont(font or "MenuFont")
+    surface.DrawText(txt)
+end
+
+function surf:DrawOutlinedRect(Col,x, y, w, h)
+    surface.SetDrawColor(Col)
+    surface.DrawOutlinedRect(x, y, w, h,1)
+end
+
+function surf:DrawRect(Col,x, y, w, h)
+    surface.SetDrawColor(Col)
+    surface.DrawRect(x, y, w, h)
+end
+
+function surf:DrawTexturedRect(Col, Mat, x, y, w, h)
+    surface.SetDrawColor(Col)
+    surface.SetMaterial(Mat)
+    surface.DrawTexturedRect(x, y, w, h)
+end
+
+function Gui:MainStuff()
+    tuffinIndia = false
+    if Util.Menu then return end
+    Util.Menu = vgui.Create("DFrame")
+    Util.Menu:SetSize(450,600)
+    Util.Menu:SetTitle("")
+    Util.Menu:SetVisible(tuffinIndia)
+    Util.Menu:MakePopup()
+    Util.Menu:Center()
+    Util.Menu.btnMaxim:SetVisible( false )
+	Util.Menu.btnMinim:SetVisible( false )
+    Util.Menu:SetPaintedManually( true )
+
+    function Util.Menu:PerformLayout()
+        local titleText = self:GetTitle() or ""
+        
+        local textWidth, textHeight = self.lblTitle:GetContentSize()
+        
+        local x = (self:GetWide() - textWidth) / 2
+        self.lblTitle:SetPos(x, 8)
+        
+        self.lblTitle:SetSize(textWidth, textHeight)
+    end
+
+    Util.Menu.btnClose.DoClick = function(self)
+        Util.Menu:SetVisible(false) 
+    end
+
+    Util.Menu.btnClose.Paint = function(self,w,h)
+        draw.SimpleTextOutlined("_", "CloseButton", 28, -6, Color( 255, 255, 255, 255 ), TEXT_ALIGN_RIGHT, TEXT_ALIGN_TOP, 1, Color( 255, 255, 255, 255 ))
+    end
+
+    Util.Menu.Paint = function(self,w,h)
+        local GradientColors = MenuSettings.ConfigTable.Gradient
+        local bla = Color(0,0,0,255)
+        //aids 
+        bla.r = GradientColors.r
+        bla.g = GradientColors.g
+        bla.b = GradientColors.b
+        bla.a = 255 / ( GradientColors.a ) + 1000
+
+        surf:DrawRect(Color(35,35,35),0, 0, w, h)
+        surf:DrawOutlinedRect(Color(0,0,0),0, 0, w, h)
+        surf:DrawTexturedRect(bla, Gradient_Up, 0, 0, w, h)
+        local title = "Exodium V4"
+        draw.SimpleTextOutlined(title, "MenuFont", w/2, 8, Color(211,211,211), TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP, 1, Color(0,0,0,255))
+    end
+
+    Util.TabSheet = Util.Menu:Add("DPropertySheet")
+    Util.TabSheet:Dock(FILL)
+
+    Util.TabSheet.Paint = function(self,w,h)
+        surf:DrawRect(Color(40,40,40),0, 0, w, h)
+        surf:DrawOutlinedRect(Color(0,0,0),0, 0, w, h)
+        surf:DrawTexturedRect(MenuSettings.ConfigTable.Gradient, Gradient_Up, 0, 0, w, h)
+        surf:DrawRect(MenuSettings.ConfigTable.MainTheme,1, 1, w - 2, 1)
+        surf:DrawOutlinedRect(Color(0,0,0),0, 2, w, h)
+    end
+
+    local OldCopy = Util.TabSheet.AddSheet
+	Util.TabSheet.AddSheet = function(self, Label, Panel, Material, NoStretchX, NoStretchY, Tooltip)
+		local Sheet = OldCopy(self, Label, Panel, Material, NoStretchX, NoStretchY, Tooltip)
+
+        self.tabScroller:Dock(TOP)
+        self.tabScroller:DockMargin(8, 1, 0, 0)
+        self.tabScroller:SetOverlap( -3 )
+
+        Sheet.Panel.Paint = function(self,w,h)
+            surf:DrawRect(Color(45,45,45),0, 0, w, h)
+            surf:DrawOutlinedRect(Color(0,0,0),0, 0, w, h)
+        end
+  
+        Sheet.Panel:SetPos( self:GetPadding(), 15 + self:GetPadding() )
+        Sheet.Tab.GetTabHeight = function() return 20 end
+		Sheet.Tab:SetTextColor(Color(0, 0, 0, 0))
+        Sheet.Tab.Paint = function(self, w, h)
+            draw.SimpleTextOutlined(self:GetText(), "MenuFont", w / 2, h / 2, textCol, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER, 1, Color( 0, 0, 0, 255 ))
+            local fart = 18
+            if self:IsActive() then
+                surf:DrawOutlinedRect(MenuSettings.ConfigTable.MainTheme, 0, fart, w, h - fart - 1)
+                surf:DrawOutlinedRect(Color(0,0,0), 0, fart - 1, w, h - fart + 1)
+            end
+        end
+    end 
+
+    for _, v in SortedPairs(MenuSettings.tabs, false) do
+        Util.panel = vgui.Create("Panel", Util.TabSheet)
+        Util.TabSheet:AddSheet(v.Name, Util.panel)
+
+        Util.Panels[v.Name] = {}
+        for i = 1, 2 do
+            Util.dockPanel = vgui.Create("Panel", Util.panel)
+            Util.dockPanel:SetPaintedManually( true )
+            Util.dockPanel:Dock(Docks.Dock[i])
+            Util.dockPanel:DockMargin(5, 5, 5, 5)
+            Util.dockPanel:SetWide(205)
+            Util.dockPanel.Paint = function(self,w,h)
+                local pan = MenuSettings.ConfigTable.Gradient
+                surf:DrawRect(Color(50,50,50),0, 0, w, h)
+                surf:DrawTexturedRect(pan, Gradient_Up, 0, 0, w, h)
+                surf:DrawOutlinedRect(Color(0,0,0),0, 0, w, h)
+            end
+
+            Util.Panels[v.Name][Docks.Names[i]] = Util.dockPanel
+        end
+    end
+end
+
+function Gui:CheckBox(tabName, side, text, makeColorPicker, isdetected, ColorVar, CheckedVar)
+    if isdetected == nil then isdetected = false end
+    local parent = Util.Panels[tabName] and Util.Panels[tabName][side]
+    if not parent then return end
+    
+    Util.checkbox = vgui.Create("DCheckBoxLabel", parent)
+    Util.checkbox:Dock(TOP)
+    Util.checkbox:SetText(text)	
+    Util.checkbox:SetValue( false )
+    Util.checkbox:DockMargin(5, 5, 5, 0)
+    Util.checkbox:SetPaintedManually( true )
+    function Util.checkbox:PerformLayout()
+	    local x = self.m_iIndent || 0
+
+        self.Button:SetSize( 15, 15 )
+        self.Button:SetPos( x, math.floor( ( self:GetTall() - self.Button:GetTall() ) / 2 ) )
+
+        self.Label:SetTextColor(Color(0,0,0,0))
+        self.Paint = function(self,w,h)
+            local textCol
+            local text = self:GetText()
+            if isdetected then
+                textCol = MenuSettings.ConfigTable.FeatureWarning
+            else
+                textCol = Color(211,211,211)
+            end
+            draw.SimpleTextOutlined(text, "MenuFont", x + self.Button:GetWide() + 3, math.floor( ( self:GetTall() - self.Label:GetTall() ) / 2 ), textCol, TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP, 1, Color( 0, 0, 0, 255 ))
+        end
+    end
+    Util.checkbox.Button.Paint = function(self,w,h)
+        local col = MenuSettings.ConfigTable.Gradient
+        col = Color(col.r,col.g,col.b,col.a - 55)
+        if self:GetChecked() then
+            surf:DrawRect(MenuSettings.ConfigTable.MainTheme,0, 0, w, h)
+        else
+            surf:DrawRect(Color(50,50,50),0, 0, w, h)
+        end
+        surf:DrawTexturedRect(col, Gradient_Up, 0, 0, w, h)
+        surf:DrawOutlinedRect(Color(0,0,0),0, 0, w, h)
+    end
+
+    function Util.checkbox:OnChange(val)
+        MenuSettings.ConfigTable[CheckedVar] = val
+    end
+
+    if makeColorPicker then
+        local ColorsOfTheWeek = Color(255,255,255,255)
+        Util.ColorButt = vgui.Create("DColorButton", Util.checkbox)
+        Util.ColorButt:SetColor(ColorVar or ColorsOfTheWeek, false)
+        Util.ColorButt:Dock(TOP)
+        Util.ColorButt:DockMargin(160, 3, 5, 0)
+        Util.ColorButt:SetTall(11)
+        Util.ColorButt:SetPaintedManually( true )
+
+        Util.ColorButt.Paint = function(self,w,h)
+            local col = MenuSettings.ConfigTable.Gradient
+            col = Color(col.r,col.g,col.b,col.a - 55)
+            surf:DrawRect(ColorVar or ColorsOfTheWeek, 0, 0, w, h)
+            surf:DrawTexturedRect(col, Gradient_Up, 0, 0, w, h)
+            surf:DrawOutlinedRect(Color(0,0,0),0, 0, w, h)
+        end
+
+        function Util.ColorButt:DoClick()
+            if IsValid(Util.ColPanel) then
+                Util.ColPanel:MakePopup()
+                Util.ColPanel:MoveToFront()
+                return
+            end
+
+            local btnX, btnY = self:LocalToScreen(0, 0)
+
+            Util.ColPanel = vgui.Create("DFrame")
+            Util.ColPanel:SetTitle("")
+            Util.ColPanel:SetPos(btnX, btnY + self:GetTall() + 1)
+            Util.ColPanel:SetSize(200,200)
+            Util.ColPanel:MakePopup()
+            Util.ColPanel:SetPaintedManually(true)
+            Util.ColPanel.btnMaxim:SetVisible( false )
+            Util.ColPanel.btnMinim:SetVisible( false )
+
+            Util.ColPanel.btnClose.Paint = function(self,w,h)
+                surf:DrawText(Color(255,255,255),13,-6,"CloseButton","_")
+            end
+            Util.ColPanel.Paint = function(self,w,h)
+                surf:DrawRect(Color(35,35,35),0, 0, w, h)
+                surf:DrawOutlinedRect(Color(0,0,0),0, 0, w, h)
+                surf:DrawTexturedRect(MenuSettings.ConfigTable.Gradient, Gradient_Up, 0, 0, w, h)
+            end
+            Util.ColPanel.Paint = function(self,w,h)
+                surf:DrawRect(Color(35,35,35),0, 0, w, h)
+                surf:DrawOutlinedRect(Color(0,0,0),0, 0, w, h)
+                surf:DrawTexturedRect(MenuSettings.ConfigTable.Gradient, Gradient_Up, 0, 0, w, h)
+            end
+
+            Util.colorpicker = vgui.Create("DColorMixer", Util.ColPanel)
+            Util.colorpicker:Dock(FILL)
+            Util.colorpicker:DockMargin(5, 5, 5, 5)
+            Util.colorpicker:SetPalette(false)  		
+            Util.colorpicker:SetAlphaBar(true) 	
+            Util.colorpicker:SetWangs(false)
+            Util.colorpicker:SetColor(ColorVar or ColorsOfTheWeek)
+            Util.colorpicker:SetPaintedManually( true )
+
+            Util.colorpicker.ValueChanged = function(_, col)
+                if MenuSettings.ConfigTable[ColorVar] == nil then
+                    table.insert(MenuSettings.ConfigTable, ColorVar)
+                end
+                ColorsOfTheWeek = col
+                if ColorVar then
+                    ColorVar.r = col.r
+                    ColorVar.g = col.g
+                    ColorVar.b = col.b
+                    ColorVar.a = col.a
+                end
+            end
+
+            Util.ColPanel.OnClose = function()
+                Util.ColPanel = nil
+            end
+        end
+    end
+
+    return Util.checkbox
+end
+
+function Gui:Binder(tabName, side)
+    local parent = Util.Panels[tabName] and Util.Panels[tabName][side]
+    if not parent then return end
+
+    Util.binder = vgui.Create("DBinder", parent)
+    Util.binder:Dock(TOP)
+    Util.binder:SetTall(20)
+    Util.binder:DockMargin(5, 5, 5, 0)
+    Util.binder:SetPaintedManually( true )
+    Util.binder.Paint = function(self,w,h)
+        self:SetFont("MenuFont")
+        self:SetTextColor(Color(211,211,211))
+        local col = MenuSettings.ConfigTable.Gradient
+        col = Color(col.r,col.g,col.b,col.a - 25)
+        surf:DrawRect(Color(50,50,50),0, 0, w, h)
+        surf:DrawTexturedRect(col, Gradient_Up, 0, 0, w, h)
+        surf:DrawOutlinedRect(Color(0,0,0),0, 0, w, h)
+    end
+
+    return Util.binder
+end
+
+function Gui:ComboBox(tabName, side, objects)
+    local parent = Util.Panels[tabName] and Util.Panels[tabName][side]
+    if not parent then return end
+    Util.combo = vgui.Create("DComboBox", parent)
+    Util.combo:Dock(TOP)
+    Util.combo:SetTall(20)
+    Util.combo:DockMargin(5, 5, 5, 0)
+    Util.combo:SetTextColor(Color(0,0,0,0))
+    Util.combo:SetPaintedManually( true )
+    Util.combo.Paint = function(self,w,h)
+        local col = MenuSettings.ConfigTable.Gradient
+        col = Color(col.r,col.g,col.b,col.a - 55)
+        surf:DrawRect(Color(50,50,50),0, 0, w, h)
+        surf:DrawTexturedRect(col, Gradient_Up, 0, 0, w, h)
+        surf:DrawOutlinedRect(Color(0,0,0),0, 0, w, h)
+        local sex, fart = surface.GetTextSize(self:GetTextSize())
+        draw.SimpleTextOutlined(self:GetText(), "MenuFont", 5, h / 2, textCol, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER, 1, Color( 0, 0, 0, 255 ))
+    end
+
+	local OriginalOnMenuOpened = Util.combo.OnMenuOpened//from derama bc im retarded
+	Util.combo.OnMenuOpened = function(self, Menu)
+        self:MoveToFront() 
+		OriginalOnMenuOpened(self, Menu)
+		local Children = Menu:GetCanvas():GetChildren()
+		for Index, Child in ipairs(Children) do
+			Child.Paint = function(self, Width, Height)
+			    self:SetTextColor(Color(0, 0, 0, 0))
+                surf:DrawRect(Color(40,40,40),0,0,Width,Height)
+
+                if Index == 1 and #Children > 1 then
+                    surf:DrawOutlinedRect(Color(0,0,0), 0, -1, Width, Height + 2)
+				elseif Index == #Children then
+					surf:DrawOutlinedRect(Color(0,0,0), 0, -1, Width, Height + 1)
+				else
+					surf:DrawOutlinedRect(Color(0,0,0), 0, -1, Width, Height + 2)
+				end
+
+				draw.SimpleTextOutlined(self:GetText(), "MenuFont", 10, Height / 2, textCol, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER, 1, Color( 0, 0, 0, 255 ))
+			end
+		end
+	end
+
+    if objects.Visible then
+        Util.combo:SetValue(objects.Visible)
+    end
+
+    if objects.Methods then
+        for i = 1,#objects.Methods do
+            local choice = objects.Methods[i]
+            Util.combo:AddChoice(choice)
+        end
+    end
+
+    return Util.combo
+end
+
+function Gui:Slider(tabName, side, min, max, dec, def, var)
+    local parent = Util.Panels[tabName] and Util.Panels[tabName][side]
+    if not parent then return end
+
+    Util.slider = vgui.Create("DNumSlider", parent)
+    Util.slider:Dock(TOP)
+    Util.slider:DockMargin(0, 0, 0, 0)
+    Util.slider:SetTall(32)
+    Util.slider:SetMin(min)
+    Util.slider:SetMax(max)
+    Util.slider:SetDecimals(dec)
+    Util.slider:SetValue(def)
+    Util.slider:SetText("")
+    Util.slider:SetPaintedManually( true )
+    Util.slider.Paint = function(self, w, h)
+        local OldSelf = self
+        self.Slider.Paint = function(self,w,h)
+            local col = MenuSettings.ConfigTable.Gradient
+            col = Color(col.r,col.g,col.b,col.a - 55)
+            local val = (OldSelf:GetValue() - OldSelf:GetMin()) / (OldSelf:GetMax() - OldSelf:GetMin())
+            local fillW = w * val
+
+            surf:DrawRect(Color(60, 60, 60), 0, 0, w, h)
+            surf:DrawTexturedRect(col, Gradient_Up, 0, 0, w, h)
+            surf:DrawRect(MenuSettings.ConfigTable.MainTheme, 0, 0, fillW, h)
+            surf:DrawTexturedRect(col, Gradient_Up, 0, 0, fillW, h)
+
+            local text = string.format("%."..tostring(dec).."f", OldSelf:GetValue())
+            draw.SimpleTextOutlined(text, "MenuFont", w / 2, h / 2, textCol, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER, 1, Color( 0, 0, 0, 255 ))
+            surf:DrawOutlinedRect(Color(0, 0, 0), 0, 0, w, h)
+        end
+    end
+
+    if IsValid(Util.slider.TextArea) then
+        Util.slider.TextArea:SetVisible(false)
+        Util.slider.TextArea:SetWide(0)
+        Util.slider.TextArea:SetTall(0)
+    end
+
+    Util.slider.Label:SetVisible(false)
+
+    Util.slider.PerformLayout = function(self)
+        self.Slider:Dock(FILL)
+        self.Slider:DockMargin(8, 8, 8, 8)
+    end
+
+    function Util.slider:OnValueChanged(value)
+        MenuSettings.ConfigTable[var] = value
+    end
+
+    Util.slider.Slider.Knob.Paint = function(self, w, h) end
+
+    return Util.slider
+end
+
+function Gui:Label(tabName, side, text)
+    local parent = Util.Panels[tabName] and Util.Panels[tabName][side]
+    if not parent then return end
+
+    Util.label = vgui.Create("DLabel", parent)
+    Util.label:SetText(text)
+    Util.label:Dock(TOP)
+    Util.label:SetTall(20)
+    Util.label:DockMargin(5, 5, 5, 0)
+    //Util.label:SetPaintedManually( true )
+
+    return Util.label
+end	
+
+function Gui:Button(tabName, side, text)
+    local parent = Util.Panels[tabName] and Util.Panels[tabName][side]
+    if not parent then return end
+
+    Util.dihtton = vgui.Create("DButton", parent)
+    Util.dihtton:SetText(text)
+    Util.dihtton:Dock(TOP)
+    Util.dihtton:SetTall(20)
+    Util.dihtton:DockMargin(5, 5, 5, 0)
+    Util.dihtton:SetTextColor(Color(211,211,211))
+    Util.dihtton:SetPaintedManually( true )
+
+    Util.dihtton.Paint = function(self,w,h)
+        surf:DrawRect(Color(50,50,50),0, 0, w, h)
+        surf:DrawTexturedRect(MenuSettings.ConfigTable.Gradient, Gradient_Up, 0, 0, w, h)
+        surf:DrawOutlinedRect(Color(0,0,0),0, 0, w, h)
+    end
+
+    return Util.dihtton
+end	
+
+function Gui:Category(tabName, side, Title, ShouldBeOpen, elements)
+    local parent = Util.Panels[tabName] and Util.Panels[tabName][side]
+    if not parent then return end
+
+    Util.category = vgui.Create("DCollapsibleCategory", parent)
+    Util.category:SetLabel(Title)
+    Util.category:Dock(TOP)
+    Util.category:DockMargin(5, 5, 5, 0)
+    Util.category:DoExpansion(ShouldBeOpen)
+    Util.category:SetPaintedManually( true )
+
+    Util.category.Paint = function(self,w,h)
+        local col = MenuSettings.ConfigTable.Gradient
+        col = Color(col.r,col.g,col.b,col.a - 155)
+        surf:DrawRect(Color(40,40,40),0, 0, w, h)
+        surf:DrawTexturedRect(col, Gradient_Up, 0, 0, w, h)
+        surf:DrawOutlinedRect(Color(0,0,0),0, 0, w, h)
+    end
+
+    Util.container = vgui.Create("Panel", Util.category)
+    //Util.container:SetPaintedManually( true )
+    Util.container:Dock(FILL)
+    Util.container:DockPadding(5, 5, 5, 5)
+
+    for _, element in ipairs(elements) do
+        element:SetParent(Util.container)
+        element:Dock(TOP)
+        if element:GetClassName() == "AvatarImage" then
+            element:DockMargin(0, 0, 130, 0)
+            element:SetTall(50)
+        else
+            element:DockMargin(1, 0, 0, 5)
+        end
+    end
+
+    Util.category:SetContents(Util.container)
+
+    return Util.category
+end
+
+function Gui:Avatar(tabName, side)
+    local parent = Util.Panels[tabName] and Util.Panels[tabName][side]
+    if not parent then return end
+
+    Util.Avatar = vgui.Create( "AvatarImage", parent )
+    //Avatar:SetPaintedManually( true )
+    Util.Avatar:SetPlayer( LocalPlayer(), 164 )
+    Util.Avatar.PaintOver = function(self,w,h)
+        surf:DrawOutlinedRect(Color(0,0,0), 0, 0, w, h)
+    end
+
+    return Util.Avatar
+end
+
+//AIDS
+local GuiShitDatMakesMeMad = {
+    Aim = {
+        function()
+            Gui:Category("Aim", "Left", "General", true, {
+                Gui:CheckBox("Aim", "Left", "Aimbot", false, false , nil , "aimbot_enable"),
+                Gui:ComboBox("Aim", "Left", MenuSettings.ConfigTable.AimbotMethods),
+                Gui:ComboBox("Aim", "Left", MenuSettings.ConfigTable.hitgroupToAimAt),
+                Gui:Binder("Aim", "Left"),
+
+                Gui:CheckBox("Aim", "Left", "TriggerBot", true, false, nil , "triggerbot_enable"),
+                Gui:Binder("Aim", "Left"),
+            })
+
+            Gui:Category("Aim", "Left", "Aimbot Visualisation", true, {
+                Gui:CheckBox("Aim", "Right", "Aimbot Fov", true, false, nil, "aimbot_fov"),
+                Gui:Slider("Aim", "Left", 0, 100, 0, 30),
+                Gui:CheckBox("Aim", "Right", "Snapline", true, false, nil, "aimbot_snapline"),
+                Gui:CheckBox("Aim", "Right", "Name", true, false, nil, "aimbot_name"),
+                Gui:CheckBox("Aim", "Right", "Health", true, false, nil, "aimbot_health"),
+                Gui:CheckBox("Aim", "Right", "UserGroup", true, false, nil, "aimbot_usergroup"),
+                Gui:CheckBox("Aim", "Right", "Lag Comp", true, false, nil, "aimbot_lagcomp"),
+                Gui:CheckBox("Aim", "Right", "Simulation Time", true, false, nil, "aimbot_simulationtime"),
+            })
+
+            Gui:Category("Aim", "Right", "Accuracy", true, {
+                Gui:CheckBox("Aim", "Right", "No Spread", false, false, nil, "accuracy_nospread"),
+                Gui:CheckBox("Aim", "Right", "No Recoil", false, false, nil, "accuracy_norecoil"),
+                Gui:ComboBox("Aim", "Left", MenuSettings.ConfigTable.CompenSationMethod),
+                Gui:CheckBox("Aim", "Right", "Forward tracking", false, false, false, nil, "accuracy_forwardtracking"),
+                Gui:CheckBox("Aim", "Right", "Extrapolation", false, false, false, nil, "accuracy_extrapolation"),
+                Gui:CheckBox("Aim", "Right", "Lerp Compensation", false, false, false, nil, "accuracy_LerpCompensation"),
+                Gui:CheckBox("Aim", "Right", "CUserCmd Override", false, true, false, false, nil, "accuracy_CUserCmd_override"),
+                Gui:CheckBox("Aim", "Right", "Engine Prediction", false, false, false, nil, "accuracy_engineprediction"),
+            })
+
+            Gui:Category("Aim", "Right", "Filters", false, {
+                Gui:CheckBox("Aim", "Right", "Ignore Buildmode Players", false, false, false, nil, "Filters_ignorebuildmodeplayers"),
+                Gui:CheckBox("Aim", "Right", "Ignore Admins", false, false, false, false, nil, "Filters_ignoreAdmins"),
+                Gui:CheckBox("Aim", "Right", "Ignore GodMode", false, false, false, false, nil, "Filters_ignoregodmode"),
+                Gui:CheckBox("Aim", "Right", "Ignore Cloked", false, false, false, false, nil, "Filters_ignorecloked"),
+                Gui:CheckBox("Aim", "Right", "Ignore Team", false, false, false, false, nil, "Filters_ignoreteam"),
+                Gui:CheckBox("Aim", "Right", "Ignore Bots", false, false, false, false, nil, "Filters_ignorebots"),
+                Gui:CheckBox("Aim", "Right", "Ignore InVehicle", false, false, false, false, nil, "Filters_ignoreInVehicle"),
+                Gui:CheckBox("Aim", "Right", "Ignore Steam Friends", false, false, false, false, nil, "Filters_ignoresteamfriends"),
+            })
+        end
+    },
+
+    Rage = {
+        function()
+            Gui:Category("Rage", "Left", "General", true, {
+                Gui:CheckBox("Rage", "Left", "Anti Aim", false, false, false, false, nil, "GeneralRage_antiaim"),
+                Gui:Label("Rage", "Left", "Yaw"),
+                Gui:ComboBox("Rage", "Left", MenuSettings.ConfigTable.AntiAimYawReal),
+                Gui:Label("Rage", "Left", "Pitch"),
+                Gui:ComboBox("Rage", "Left", MenuSettings.ConfigTable.AntiAimYawFake),
+            })
+
+            Gui:Category("Rage", "Right", "Extras", true, {
+                Gui:CheckBox("Rage", "Right", "Resolver", false, false, false, false, nil, "ExtrasRage_Resolver"),
+                Gui:CheckBox("Rage", "Right", "Extrapolate Fake Lag", false, false, false, false, nil, "ExtrasRage_ExtrapolateFakeLag"),
+                Gui:CheckBox("Rage", "Right", "LC Breaker", false, false, false, false, nil, "ExtrasRage_LCBreaker"),
+                Gui:CheckBox("Rage", "Right", "Ebay Desync 3000", false, false, false, false, nil, "ExtrasRage_EbayDesync"),
+            })
+            
+            Gui:Category("Rage", "Left", "BSendPacket Boogers", true, {
+                Gui:CheckBox("Rage", "Right", "Fake Lag", false, false, false, false, nil, "BSendPacketBoogersRage_FakeLag"),
+                Gui:Slider("Rage", "Right", 1, 23, 0, 14),
+                Gui:CheckBox("Rage", "Right", "Fake Duck", false, false, false, false, nil, "BSendPacketBoogersRage_FakeDuck"),
+                Gui:Binder("Rage", "Right"),
+            })
+
+            Gui:Category("Rage", "Right", "Tick Base Manipulation", true, {
+                Gui:CheckBox("Rage", "Right", "AirStuck", false, false, false, false, nil, "TickBaseManipulation_AirStuck"),
+                Gui:Binder("Rage", "Right"),
+                Gui:CheckBox("Rage", "Right", "Sequence Manipulation", false, false, false, false, nil, "TickBaseManipulation_AirStuck"),
+                Gui:Slider("Rage", "Right", 1, 200, 0, 50),
+                Gui:Binder("Rage", "Right"),
+                Gui:CheckBox("Rage", "Right", "DoubleTap", false, false, false, false, nil, "TickBaseManipulation_DoubleTap"),
+                Gui:CheckBox("Rage", "Right", "Teleport", false, false, false, false, nil, "TickBaseManipulation_Teleport"),
+                Gui:Binder("Rage", "Right"),
+            })
+        end
+    },
+
+    Visuals = {
+        function()
+            Gui:Category("Visuals", "Left", "Players", true, {
+                Gui:CheckBox("Visuals", "Left", "ESP", false, false, false, false, nil, "ESP_enable"),
+                Gui:CheckBox("Visuals", "Left", "Box", true, false, false, false, "box_color", "ESP_box"),
+                Gui:ComboBox("Visuals", "Left", MenuSettings.ConfigTable.ESPBoxes),
+                Gui:CheckBox("Visuals", "Left", "Name", true, false, false, false, "name_color", "ESP_name"),
+                Gui:CheckBox("Visuals", "Left", "HealthBar", true, false, false, false, "health_color", "ESP_health"),
+                Gui:ComboBox("Visuals", "Left", MenuSettings.ConfigTable.HealthShit),
+                Gui:CheckBox("Visuals", "Left", "UserGroup", true, false, false, false, "usergroup_color", "ESP_usergroup"),
+                Gui:CheckBox("Visuals", "Left", "Job", true, false, false, false, "job_color", "ESP_job"),
+                Gui:CheckBox("Visuals", "Left", "Weapon", true, false, false, false, "weapon_color", "ESP_weapon"),
+                Gui:CheckBox("Visuals", "Right", "Chams", true, false, false, false, "chams_color", "ESP_chams"),
+                Gui:ComboBox("Visuals", "Right", MenuSettings.ConfigTable.ChamsMaterials)
+            })
+
+            Gui:Category("Visuals", "Left", "Weapon", true, {
+                Gui:CheckBox("Visuals", "Left", "Weapon Chams", true, false, false, false, "Weapon_color", "Weapon_chams"),
+                Gui:ComboBox("Visuals", "Left", MenuSettings.ConfigTable.WeaponChamsMaterials),
+                Gui:CheckBox("Visuals", "Left", "Bullet Tracers", true, false, false, false, "BulletTracers_color", "BulletTracers_enable"),
+                Gui:ComboBox("Visuals", "Left", MenuSettings.ConfigTable.BulletTracers),
+                Gui:CheckBox("Visuals", "Left", "Bullet Impacts", true, false, false, false, "BulletImpacts_color", "BulletImpacts_enable"),
+                Gui:ComboBox("Visuals", "Left", MenuSettings.ConfigTable.BulletImpacts),
+            })
+
+            Gui:Category("Visuals", "Right", "Filters", true, {
+                Gui:CheckBox("Visuals", "Right", "Ignore Buildmode Players", false, false, false, false, nil, "VisualsFilters_ignorebuildmode"),
+                Gui:CheckBox("Visuals", "Right", "Ignore Admins", false, false, false, false, nil, "VisualsFilters_ignoreadmins"),
+                Gui:CheckBox("Visuals", "Right", "Ignore GodMode", false, false, false, false, nil, "VisualsFilters_ignoregodmode"),
+                Gui:CheckBox("Visuals", "Right", "Ignore Cloked", false, false, false, false, nil, "VisualsFilters_ignorecloked"),
+                Gui:CheckBox("Visuals", "Right", "Ignore Team", false, false, false, false, nil, "VisualsFilters_ignoreteam"),
+                Gui:CheckBox("Visuals", "Right", "Ignore Bots", false, false, false, false, nil, "VisualsFilters_ignorebots"),
+                Gui:CheckBox("Visuals", "Right", "Ignore InVehicle", false, false, false, false, nil, "VisualsFilters_ignoreinvehicle"),
+                Gui:CheckBox("Visuals", "Right", "Ignore Steam Friends", false, false, false, false, nil, "VisualsFilters_ignoresteamfriends"),
+            })
+
+            Gui:Category("Visuals", "Right", "World", true, {
+                Gui:CheckBox("Visuals", "Right", "World Modulation", true, false, nil, "VisualsWorld_WorldModulation"),
+                Gui:CheckBox("Visuals", "Right", "Skybox Changer", true, false, false, false, "visualsworld_skyboxcolor", "VisualsWorld_skyboxchanger"),
+                Gui:ComboBox("Visuals", "Right", MenuSettings.ConfigTable.Skyboxes)
+            })
+            Gui:Category("Visuals", "Right", "View", true, {
+                //Gui:CheckBox("Visuals", "Right", "Field Of View", false, true, false, false, nil, "VisualsView_fov"),
+                Gui:CheckBox("Visuals", "Right", "Field Of View", false, false, nil, "VisualsView_fov"),
+                Gui:Slider("Visuals", "Right", 60, 150, 0, fov_desired:GetFloat(), "fov_ammount")
+            })
+        end
+    },
+
+    Settings = {
+        function()
+            /*
+            Gui:Category("Settings", "Left", "Movement", false, {
+                Gui:CheckBox("Settings", "Left", false, "Auto Jump", false),
+                Gui:ComboBox("Settings", "Left", MenuSettings.ConfigTable.AutoStrafeMethods),
+            })
+            */
+            Gui:Category("Settings", "Left", "Steam", false, {
+            })
+            /* improve it LATEEEER
+            Gui:Category("Settings", "Left", "User", true, {
+                Gui:Avatar("Settings", "Left"),
+                Gui:Label("Settings", "Left", "Name: "..LocalPlayer():Name()),
+                Gui:Label("Settings", "Left", "UID: ".."0"),
+                Gui:Label("Settings", "Left", "Role: ".."Developer"),
+            })
+            */
+
+            Gui:Button("Settings", "Right", "Load")
+            Gui:Button("Settings", "Right", "Remove")
+
+            Gui:Category("Settings", "Right", "Menu Settings", false, {
+                Gui:CheckBox("Visuals", "Right", "Menu Color", true, false, MenuSettings.ConfigTable.MainTheme, "MainTheme"),
+                Gui:CheckBox("Visuals", "Right", "Feature Warning Color", true, nil, MenuSettings.ConfigTable.FeatureWarning),
+                Gui:CheckBox("Visuals", "Right", "Gradient Color", true, nil, MenuSettings.ConfigTable.Gradient),
+                Gui:CheckBox("Visuals", "Right", "Presets", false),
+                Gui:ComboBox("Visuals", "Left", MenuSettings.ConfigTable.MenuPresets),
+            })
+        end
+    },
+}
+
+
+
+function Gui:RunElements()
+    for _,TableIndex in pairs(GuiShitDatMakesMeMad) do
+        for k,v in pairs(TableIndex) do
+            v()
+        end
+    end
+end
+
+function Util.WasKeyPressed(enum)
+    local WasKeyPressed = input.WasKeyPressed
+    if WasKeyPressed(enum) then
+        return true
+    end
+end
+
+API.Callbacks.Add("Hook::CreateMove", "CMove", function(cmd)
+    local sex = Util.WasKeyPressed(KEY_INSERT)
+    if sex then
+        Util.Menu:SetVisible(true)
+    end
+end)
+
+hook.Add( "CalcView", "sex", function( ply, pos, angles, fov )
+	local view = {
+		origin = origin,
+		angles = angles,
+		fov = fov,
+		drawviewer = false
+	}
+
+    if MenuSettings.ConfigTable["VisualsView_fov"] then
+        view.fov = MenuSettings.ConfigTable["fov_ammount"]
+    end
+
+	return view
+end )
+
+local function AwesomePaintStuff(panel)
+    if not IsValid(panel) or not panel:IsVisible() then return end
+
+    panel:SetPaintedManually(true)
+    panel:PaintManual()
+
+    local deferred = {}
+
+    for _, child in ipairs(panel:GetChildren()) do
+        if IsValid(child) and child:IsVisible() then
+            if IsValid(child.Menu) and child:IsMenuOpen() then
+                table.insert(deferred, child) 
+            else
+                AwesomePaintStuff(child)
+            end
+        end
+    end
+
+    for _, child in ipairs(deferred) do
+        if IsValid(child.Menu) then
+            local canvasChildren = child.Menu:GetCanvas():GetChildren()
+            child.Menu:SetPaintedManually(true)
+            child.Menu:PaintManual()
+
+            for _, subChild in ipairs(canvasChildren) do
+                if IsValid(subChild) and subChild:IsVisible() then
+                    AwesomePaintStuff(subChild)
+                end
+            end
+        end
+    end
+end
+
+AwesomePaintStuff(Util.Menu)
+Gui:MainStuff()
+Gui:RunElements()
+
+API.Callbacks.Add("Hook::PostRender", "Rendering", function()
+    cam.Start2D()
+        if IsValid(Util.Menu) then
+            AwesomePaintStuff(Util.Menu)
+        end
+        if IsValid(Util.ColPanel) then
+            if not Util.Menu:IsVisible() then
+                Util.ColPanel:SetVisible(false)
+            else
+                Util.ColPanel:SetVisible(true)
+            end
+            Util.ColPanel:PaintManual()
+        end
+    cam.End2D()
+end)

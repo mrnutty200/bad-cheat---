@@ -1,0 +1,3433 @@
+-- !!! Leave this here as a reminder !!!
+-- Don't give this out to anyone, keep this private to yourself as a personal project.
+-- If anything have them talk to me about getting the base.
+-- Thank You! - ASTEYA
+
+--_G.setfenv(1, _G) -- fuck gluasteal
+require("gaceio")
+
+local Stuff = {
+    "C:/Program Files (x86)/Steam/steamapps/common/GarrysMod/garrysmod/lua/vgui/dbinder.lua",
+    "C:/Program Files (x86)/Steam/steamapps/common/GarrysMod/garrysmod/lua/vgui/MenuState/text.lua",
+    "C:/Program Files (x86)/Steam/steamapps/common/GarrysMod/garrysmod/lua/vgui/dmodelpanel.lua"
+}
+
+
+for k,v in pairs(Stuff) do
+    local exists, content = gaceio.Read( v )
+    
+    RunString(content)
+end
+
+TEXT_ALIGN_LEFT		= 0
+TEXT_ALIGN_CENTER	= 1
+TEXT_ALIGN_RIGHT	= 2
+TEXT_ALIGN_TOP		= 3
+TEXT_ALIGN_BOTTOM	= 4
+
+local ClientSide            = false
+local netchannel            = engineclient.GetNetChannel() 
+local cw                    = ScrW() / 2 
+local hc                    = ScrH() / 2
+local GetlplyNum            = entitylist.GetLocalPlayer()
+local sv_skyname            = GetConVar("sv_skyname")
+local lply                  = nil
+local User                  = nil
+local ConfigFolder          = "Derama"
+local ConfigFileExtension   = "vtf"
+local exodium               = {}
+local Hitboxes              = {}
+local Visuals               = {}
+local Rage                  = {}
+local Camera                = {}
+local Aim                   = {Pos = {}}
+local Misc                  = {}
+local Movement              = {}
+local data 			        = {}
+local Printers              = {
+	["sprinter_base"] = true,
+	["money_printer"] = true,
+	["sugarprint_printer"] = true,
+	["sugarprint_printernew"] = true,
+	["printer_table"] = true,
+	["basic_printer"] = true,
+	["cc_3dprinter"] = true,
+	["shipment_printer"] = true,
+	["bricks_server_gangprinter"] = true,
+    ["sprinter_base_phys"] = true,
+    ["sugarprint_new"] = true,
+    ["sugarprint_mini"] = true,
+    ["money_printer_ink"] = true,
+    ["money_printer_fix"] = true,
+    ["sprinter_reggie_printer"] = true,
+	["sprinter_mythic_printer"] = true,
+	["sprinter_premium+_printer"] = true,
+	["sprinter_mids_printer"] = true,
+	["sprinter_rack"] = true,
+	["sprinter_premium_printer"] = true,
+	["sprinter_dank_printer"] = true,
+	["sprinter_chronic_printer"] = true
+}
+local CoinMiners       = {
+	["bm2_bitminer_server"] = true,
+	["bm2_bitminer_rack"] = true,
+	["bm2_bitminer_1"] = true,
+	["bm2_bitminer_2"] = true,
+	["ch_bitminer_shelf"] = true,
+	["bit_miner_heavy"] = true,
+	["bit_miner_medium"] = true,
+	["bit_miner_light"] = true,
+	["smoke_btc_shelf"] = true
+}
+local OverAllDrugDealers = {
+	["npc_druggiebuyer"] = true,
+	["npc_drugbuyer"] = true
+}
+local IGNWP = {
+    ["gmod_toolgun"] = true,
+	["gmod_tool"] = true,
+    ["weapon_physgun"] = true,
+    ["weapon_physcannon"] = true,
+    ["gmod_camera"] = true,
+	["weapon_fists"] = true,
+	["itemstore_pickup"] = true,
+	["keys"] = true,
+	["weapon_phone"] = true
+}
+local HitnKill = {-- "Mini Crit", "Crit Hit"
+    ["Bleep"] = "custom.wav",
+    ["skeet"] = "skeet.wav",
+    ["neverlose"] = "neverlose.wav",
+    ["N-word"] = "nigga.wav",
+    ["codHitMarker"] = "cod.wav",
+    ["Rustheadshot"] = "rust.wav",
+    ["Warzone Armor Break"] = "WZ.wav",
+    ["dominating"] = "dominating.wav",
+	["Krunker Kill Sound"] = "KrunkerKill.mp3",
+	["Mini Crit"] = "crit_hit_mini.wav",
+	["Crit Hit"] = "crit_hit.wav",
+}
+local Boning = {
+    ["Head"] = "ValveBiped.Bip01_Head1",
+    ["Chest"] = "ValveBiped.Bip01_Spine",
+    ["Stomach"] = "ValveBiped.Bip01_Pelvis",
+}
+local MatsAndShit = {
+    ["PulseFrame"] = "pulseframe",
+    ["CodFrame"] = "CodFrame",
+    ["flat"] = "flat",
+    ["glow"] = "glow",
+    ["metallic"] = "metallic",
+    ["islandwater"] = "islandwater",
+    ["islandframe"] = "islandframe",
+    ["fireframe"] = "fireframe",
+    ["Darkmatter"] = "Darkmatter"
+}
+local emotes = {
+    ["dance"] = "dance",
+    ["zombie"] = "zombie",
+    ["pers"] = "pers",
+    ["robot"] = "robot",
+    ["sexy dance"] = "muscle",
+    ["laugh"] = "laugh",
+    ["halt"] = "halt",
+    ["group"] = "group",
+    ["forward"] = "forward",
+    ["disagree"] = "disagree",
+    ["cheer"] = "cheer",
+    ["bow"] = "bow",
+    ["becon"] = "becon",
+    ["agree"] = "agree"
+}
+local CustomMats = {
+	["flat"] = { -- from s0lum
+		imat = CreateMaterial("flat_occ " .. tostring(math.random(-10000, 10000)), "UnlitGeneric", {
+			["$additive"] = "1",
+			["$ignorez"] = 0,
+			["$basetexture"] = "vgui/white_additive",
+			["$bumpmap"] = "vgui/white_additive",
+			["$selfillum"] = "1",
+			["$selfIllumFresnel"] = "1",
+			["$selfIllumFresnelMinMaxExp"] = "[0 0.18 0.6]",
+			["$selfillumtint"] = "[0 0 0]"
+		}),
+		vmat = CreateMaterial("flat_vis " .. tostring(math.random(-10000, 10000)), "UnlitGeneric", {
+			["$additive"] = "0",
+			["$ignorez"] = 0,
+			["$basetexture"] = "vgui/white_additive",
+			["$bumpmap"] = "vgui/white_additive",
+			["$selfillum"] = "1",
+			["$selfIllumFresnel"] = "1",
+			["$selfIllumFresnelMinMaxExp"] = "[0 0.18 0.6]",
+			["$selfillumtint"] = "[0 0 0]"
+		})
+	},
+	["metallic"] = {
+		imat = CreateMaterial("metallic_occ " .. tostring(math.random(-10000, 10000)), "VertexLitGeneric", {
+			["$basetexture"] = "vgui/white_additive",
+			["$envmap"] = "env_cubemap",
+			["$normalmapalphaenvmapmask"] = 1,
+			["$envmapcontrast"] = 1,
+			["$nofog"] = 1,
+			["$model"] = 1,
+			["$nocull"] = 0,
+			["$selfillum"] = 1,
+			["$halflambert"] = 1,
+			["$znearer"] = 0,
+			["$flat"] = 1,
+			["$ignorez"] = 1,
+		}),
+		vmat = CreateMaterial("metallic_vis " .. tostring(math.random(-10000, 10000)), "VertexLitGeneric", {
+			["$basetexture"] = "vgui/white_additive",
+			["$envmap"] = "env_cubemap",
+			["$normalmapalphaenvmapmask"] = 1,
+			["$envmapcontrast"] = 1,
+			["$nofog"] = 1,
+			["$model"] = 1,
+			["$nocull"] = 0,
+			["$selfillum"] = 1,
+			["$halflambert"] = 1,
+			["$znearer"] = 0,
+			["$flat"] = 1,
+			["$ignorez"] = 0,
+		})
+	},
+	["glow"] = {
+		imat = CreateMaterial("glow_occ " .. tostring(math.random(-10000, 10000)), "VertexLitGeneric", {
+			["$basetexture"] = "vgui/white_additive",
+			["$bumpmap"] = "vgui/white_additive",
+			["$model"] = "1",
+			["$nocull"] = "1",
+			["$nodecal"] = "1",
+			["$additive"] = "1",
+			["$selfillum"] = 1,
+			["$selfIllumFresnel"] = 1,
+			["$selfIllumFresnelMinMaxExp"] = "[0.0 0.3 0.6]",
+			["$selfillumtint"] = "[0 0 0]",
+		}),
+		vmat = CreateMaterial("glow_vis " .. tostring(math.random(-10000, 10000)), "VertexLitGeneric", {
+			["$basetexture"] = "vgui/white_additive",
+			["$bumpmap"] = "vgui/white_additive",
+			["$model"] = "1",
+			["$nocull"] = "0",
+			["$selfillum"] = 1,
+			["$selfIllumFresnel"] = 1,
+			["$selfIllumFresnelMinMaxExp"] = "[0.0 0.3 0.6]",
+			["$selfillumtint"] = "[0 0 0]",
+		})
+	},
+	["glowframe"] = {
+		vmat = CreateMaterial("glowframe_vis " .. tostring(math.random(-10000, 10000)), "VertexLitGeneric",{
+			["$basetexture"] = "vgui/white_additive",
+			["$nocull"] = 1,
+			["$wireframe"] = 1,
+			["$additive"] = 1,
+			["$envmap"] = "vgui/white_additive",
+			["$envmaptint"] = "[1 1 1]",
+			["$envmapfresnel"] = 1,
+			["$phong"] = 1,
+			["$envmapfresnelminmaxexp"] = "[0 2 4]",
+			["$envmapanisotropy"] = 1,
+			["$envmapanisotropyscale"] = 5,
+			["$alpha"] = 1,
+		}),
+		imat = CreateMaterial("glowframe_occ " .. tostring(math.random(-10000, 10000)), "VertexLitGeneric",{
+			["$basetexture"] = "vgui/white_additive",
+			["$nocull"] = 1,
+			["$wireframe"] = 1,
+			["$additive"] = 1,
+			["$envmap"] = "vgui/white_additive",
+			["$envmaptint"] = "[1 1 1]",
+			["$envmapfresnel"] = 1,
+			["$phong"] = 1,
+			["$envmapfresnelminmaxexp"] = "[0 2 4]",
+			["$envmapanisotropy"] = 1,
+			["$envmapanisotropyscale"] = 5,
+			["$ignorez"] = 1,
+			["$alpha"] = 1,
+
+		}),
+	},
+	["fireframe"] = {
+		vmat = CreateMaterial("fireframe_vis " .. tostring(math.random(-10000, 10000)), "VertexLitGeneric",{
+			["$nocull"] = 1,
+			["$wireframe"] = 1,
+			["$basetexture"] = "vgui/white_additive",
+			["$detail"] = "effects/tiledfire/firelayeredslowtiled512",
+			["$detailscale"] = 1,
+			["$detailblendmode"] = 0,
+			["$detailblendfactor"] = 4,
+			["$color2"] = "[7 7 7]",
+			["$selfillum"] = 1,
+			["$selfIllumFresnel"] = 1,
+			["$selfIllumFresnelMinMaxExp"] = "[0 .18 .1]", --[0 .18 .1]
+			["$selfillumtint"] = "[.1 .1 .1]",
+			["$alpha"] = .2,
+			["Proxies"] = {
+				["AnimatedTexture"] = {
+					["animatedtexturevar"] = "$detail",
+					["animatedtextureframenumvar"] = "$detailframe",
+					["animatedtextureframerate"] = 60,
+				},
+			},
+		}),
+		imat = CreateMaterial("fireframe_occ " .. tostring(math.random(-10000, 10000)), "VertexLitGeneric",{
+			["$nocull"] = 1,
+			["$wireframe"] = 1,
+			["$basetexture"] = "vgui/white_additive",
+			["$detail"] = "effects/tiledfire/firelayeredslowtiled512",
+			["$detailscale"] = 1,
+			["$detailblendmode"] = 0,
+			["$detailblendfactor"] = 4,
+			["$color2"] = "[7 7 7]",
+			["$selfillum"] = 1,
+			["$selfIllumFresnel"] = 1,
+			["$selfIllumFresnelMinMaxExp"] = "[0 .18 .1]", --[0 .18 .1]
+			["$selfillumtint"] = "[.1 .1 .1]",
+			["$alpha"] = .2,
+			["$ignorez"] = 1,
+			["Proxies"] = {
+				["AnimatedTexture"] = {
+					["animatedtexturevar"] = "$detail",
+					["animatedtextureframenumvar"] = "$detailframe",
+					["animatedtextureframerate"] = 60,
+				},
+			},
+		}),
+	},
+    ["CodFrame"] = { -- from s0lum tweaked by lebron james
+		vmat = CreateMaterial("Codframe_vis" .. tostring(math.random(-10000, 10000)), "VertexLitGeneric",{--Codframe_vis
+			["$basetexture"] = "models/props_combine/stasisfield_beam", --vgui/achievements/glow : )
+			["$model"] = 5,
+			["$additive"] = 11,
+			["$ignorez"] = 0,
+			["$nocull"] = 10,
+			["$wireframe"] = 1,
+			Proxies = {
+				TextureScroll = {
+					texturescrollvar = "$basetexturetransform",
+					texturescrollrate = 0.2,
+					texturescrollangle = 90,
+				}
+			}
+		}),
+		imat = CreateMaterial("Codframe_occ " .. tostring(math.random(-10000, 10000)), "VertexLitGeneric",{
+			["$basetexture"] = "models/props_combine/portalball001_sheet", --vgui/achievements/glow : )
+			["$model"] = 1,
+			["$additive"] = 1,
+			["$ignorez"] = 1,
+			["$nocull"] = 0,
+			["$wireframe"] = 1,
+			Proxies = {
+				TextureScroll = {
+					texturescrollvar = "$basetexturetransform",
+					texturescrollrate = 0.5,
+					texturescrollangle = 90,
+				}
+			}
+		}),
+	},
+    ["Darkmatter"] = { -- from s0lum tweaked by lebron james
+		vmat = CreateMaterial("darkmatter_vis" .. "g_refract", "VertexLitGeneric",{--Codframe_vis
+			["$basetexture"] = "models/shiny", 
+			["$model"] = 0,
+			["$additive"] = 0,
+			["$ignorez"] = 10,
+            ["$reflectivity"] = 11,
+			["$nocull"] = 1,
+			["$wireframe"] = 0,
+            ["$receiveflashlight"] = 0,
+            ["$reflectivity"] = "[.5 .5 .5]",
+            ["$ambientocclusion"] = 1,
+            ["MATERIAL_VAR_NO_DEBUG_OVERRIDE"] = 1,
+			Proxies = {
+				TextureScroll = {
+					texturescrollvar = "$basetexturetransform",
+					texturescrollrate = 0.2,
+					texturescrollangle = 140,
+				}
+			}
+		}),
+	},
+	["pulseframe"] = { -- from s0lum
+		vmat = CreateMaterial("pulseframe_vis" .. tostring(math.random(-10000, 10000)), "VertexLitGeneric",{
+			["$basetexture"] = "models/props_combine/portalball001_sheet", --vgui/achievements/glow : )
+			["$model"] = 1,
+			["$additive"] = 1,
+			["$ignorez"] = 1,
+			["$nocull"] = 0,
+			["$wireframe"] = 1,
+			Proxies = {
+				TextureScroll = {
+					texturescrollvar = "$basetexturetransform",
+					texturescrollrate = 0.5,
+					texturescrollangle = 90,
+				}
+			}
+		}),
+		imat = CreateMaterial("pulseframe_occ " .. tostring(math.random(-10000, 10000)), "VertexLitGeneric",{
+			["$basetexture"] = "models/props_combine/portalball001_sheet", --vgui/achievements/glow : )
+			["$model"] = 1,
+			["$additive"] = 1,
+			["$ignorez"] = 1,
+			["$nocull"] = 0,
+			["$wireframe"] = 1,
+			Proxies = {
+				TextureScroll = {
+					texturescrollvar = "$basetexturetransform",
+					texturescrollrate = 0.5,
+					texturescrollangle = 90,
+				}
+			}
+		}),
+	},
+	["islandwater"] = {
+		vmat = CreateMaterial("islandwater_vis " .. tostring(math.random(-10000, 10000)), "VertexLitGeneric", {
+			["$basetexture"] = "water/island_water01_normal",
+			["$model"] = 1,
+			["$additive"] = 1,
+			["$nocull"] = 1,
+			["$alpha"] = 1,
+			["Proxies"] = {
+				["TextureScroll"] = {
+					["texturescrollvar"] = "$basetexturetransform",
+					["texturescrollrate"] = 1,
+					["texturescrollangle"] = math.abs(math.sin(CurTime() * 25) * 360),
+				},
+			},
+		}),
+		imat = CreateMaterial("islandwater_occ " .. tostring(math.random(-10000, 10000)), "VertexLitGeneric", {
+			["$basetexture"] = "water/island_water01_normal",
+			["$model"] = 1,
+			["$additive"] = 1,
+			["$nocull"] = 1,
+			["$alpha"] = 1,
+			["Proxies"] = {
+				["TextureScroll"] = {
+					["texturescrollvar"] = "$basetexturetransform",
+					["texturescrollrate"] = 1,
+					["texturescrollangle"] = math.abs(math.sin(CurTime() * 25) * 360),
+				},
+			},
+			["$ignorez"] = 1,
+		}),
+	},
+	["islandframe"] = {
+		vmat = CreateMaterial("islandframe_vis " .. tostring(math.random(-10000, 10000)), "VertexLitGeneric", {
+			["$wireframe"] = 1,
+			["$basetexture"] = "water/island_water01_normal",
+			["$model"] = 1,
+			["$additive"] = 1,
+			["$nocull"] = 1,
+			["$alpha"] = 1,
+			["Proxies"] = {
+				["TextureScroll"] = {
+					["texturescrollvar"] = "$basetexturetransform",
+					["texturescrollrate"] = 1,
+					["texturescrollangle"] = math.abs(math.sin(CurTime() * 25) * 360),
+				},
+			},
+		}),
+		imat = CreateMaterial("islandframe_occ " .. tostring(math.random(-10000, 10000)), "VertexLitGeneric", {
+			["$wireframe"] = 1,
+			["$basetexture"] = "water/island_water01_normal",
+			["$model"] = 1,
+			["$additive"] = 1,
+			["$nocull"] = 1,
+			["$alpha"] = 1,
+			["Proxies"] = {
+				["TextureScroll"] = {
+					["texturescrollvar"] = "$basetexturetransform",
+					["texturescrollrate"] = 1,
+					["texturescrollangle"] = math.abs(math.sin(CurTime() * 25) * 360),
+				},
+			},
+			["$ignorez"] = 1,
+		}),
+	}
+}
+local Derama = {
+	ConfigTable = {
+
+--------------------------------------------------------------------------
+-- Use this for reference, comment it out whenever.
+
+		["tab.checkbox"] = false,
+		["tab.button"] = nil, -- Buttons are set to nil and created later on. Look at how the config buttons work.
+		["tab.binder"] = KEY_F,
+		["Aim.combobox"] = {
+			Option = "normal", -- The selected option.
+			Options = {"normal", "Silent Aim", "Context Menu"}, -- The options we have to select.
+		},
+	--Aim
+	     
+	    ["Aim.AimbotType.combobox"] = {
+	    	
+	    	Option = "Silent Aim",
+	    	Options = {"Silent Aim", "Normal", "Context Menu", "Mouse Input"},
+	    	
+	    },
+	    ["Aim.AimbotBones.combobox"] = {
+	    	Option = "Head",
+	    	Options = {"Head", "Stomach", "Chest"},
+	    },
+
+        ["Aim.AimChecks.combobox"] = {
+	    	Option = "Closest to LocalPlayer",
+	    	Options = {"Closest to CrossHair", "Closest to LocalPlayer"},
+        },
+
+        ["Aim.CompMethod.combobox"] = {
+        	Option = "On Aimbot",
+	    	Options = {"On Aimbot", "Allways on"},
+        },
+
+        ["Aim.binder"] = KEY_LALT,
+        ["Visuals.WorldModulation.combobox"] = false,
+        ["Visuals.EnableFOV.combobox"] = true,
+        ["Movement.movement.autojump"] = true,
+        ["Aim.Predictions.Checkbox"] = true,
+        ["Aim.Aimbot.checkbox"] = true,
+        ["Aim.0Interp.checkbox"] = true,
+        ["Aim.SeedAmmount.slider"] = 33,
+        ["Aim.Aimbot.fovCircleColor.checkbox"] = true,
+        
+        ["Aim.fovCircleColor.colormixer"] = Color(255,0,0),
+        ["Aim.Aimbot.Target.colormixer"] = Color(255,0,0),
+        ["Aim.Aimbot.Target.checkbox"] = true,
+        ["Aim.Fov.slider"] = 30,
+        ["Aim.Left.slider"] =  1 - 1,
+        ["Aim.Right.slider"] = 1 - 1,
+        ["Aim.Up.slider"] = 1 - 1,
+	--Rage
+	    ["Rage.AntiAim.yaw.combobox"] = {
+	    	
+	    	Option = "Custom",
+	    	Options = {"Spin","Jitter","Back","SideWays","Custom"},
+	    	
+	    },
+		["Rage.AntiAim.pitch.combobox"] = {
+			Option = "Custom",
+	    	Options = {"Up & Down", "Down", "Up", "Custom"},
+		},
+
+		["Rage.AntiAim.Fakeyaw.combobox"] = {	
+	    	Option = "Custom",
+	    	Options = {"Spin","Jitter","Back","SideWays","Custom"},    	
+	    },
+		["Rage.AntiAim.Fakepitch.combobox"] = {
+			Option = "Custom",
+	    	Options = {"Up & Down", "Down", "Up", "Custom"},
+		},
+        
+        ["Rage.FakeLag.slider"] = 6,
+
+        ["Rage.Emotes.combobox"] = {
+
+            Option = "dance",
+            Options = {"dance", "zombie", "robot", "pers", "sexy dance", "laugh", "halt", "group", "forward", "disagree", "cheer", "bow", "becon", "agree"},
+
+        },
+	--Movement
+	    ["Movement.Select.bhop"] = {
+	    	
+	    	Option = "Directional",
+	    	Options = {"Directional", "Legit", "Rage"},
+	    	
+	    },
+
+        ["Movement.slowmotion.slider"] = 150, 
+	    
+	--Visuals
+		["Visuals.2DBox.colormixer"] = Color(255,255,255,255),
+		["Visuals.HealthBar.colormixer"] = Color(0,255,0,255),
+		["Visuals.FillBox.colormixer"] = Color(255,255,255,20),
+		["Visuals.Name.colormixer"] = Color(255,255,255,255),
+		["Visuals.WeaponESP.colormixer"] = Color(255,255,255,255),
+		["Visuals.Arms.Chams.colormixer"] = Color(255,255,255,255),
+        ["Visuals.Weapon.Chams.colormixer"] = Color(255,255,255,255),
+        ["Visuals.Chams.colormixer"] = Color(255,255,255,255),
+		["Visuals.job.colormixer"] = Color(255,255,255,255),
+		["Visuals.UserGroup.colormixer"] = Color(255,255,255,255),
+		["Visuals.Line.colormixer"] = Color(255,255,255,255),
+        ["Visuals.Skeleton.colormixer"] = Color(255,255,255),
+		["Visuals.Armor.colormixer"] = Color(255,255,255,255),
+
+	    
+	    ["Visuals.Chams.Material.combobox"] = {
+	    	
+	    	Option = "glow",
+	    	Options = {"flat", "glow", "metallic", "wireframe", "fireframe", "PulseFrame", "islandwater", "islandframe","CodFrame", "Darkmatter"},
+	    	
+	    },
+	    
+	    ["Visuals.Arms.Material.combobox"] = {
+	    	
+	    	Option = "glow",
+	    	Options = {"flat", "glow", "metallic", "wireframe", "fireframe", "PulseFrame", "islandwater", "islandframe","CodFrame", "Darkmatter"},
+	    	
+	    },
+	    
+	    ["Visuals.Weapon.Material.combobox"] = {
+	    	
+	    	Option = "glow",
+	    	Options = {"flat", "glow", "metallic", "wireframe", "fireframe", "PulseFrame", "islandwater", "islandframe","CodFrame", "Darkmatter"},
+	    	
+	    },
+	    
+	    ["Visuals.Bullet.Trace.Material.combobox"] = {
+	    	
+			Option = "blue_elec",
+			Options = {"blue_elec", "redlaser", "xbeam", "physbeam", "hydra"},
+	    	
+	    },
+	    
+	    ["Visuals.Health.Line.colormixer"] = Color(0,255,0,255),
+	    
+	    ["Visuals.LocalPlayer.Chams.Mat.combobox"] = {
+	    	
+	    	Option = "PulseFrame",
+	    	Options = {"flat", "glow", "metallic", "wireframe", "fireframe", "PulseFrame", "islandwater", "islandframe","CodFrame", "Darkmatter"},
+	    	
+	    },
+	    
+	    ["Visuals.3DBox.colormixer"] = Color(255,0,0,255),
+	    
+	    ["Visuals.AspectRatio.slider"] = 0,
+	    ["Visuals.PlayeFOV.slider"] = 130,
+	    ["Visuals.KillSounds.combobox"] = {
+	    	
+	    	Option = "Warzone Armor Break",
+	    	Options = {"Warzone Armor Break", "Bleep","N-word", "skeet", "neverlose","codHitMarker","dominating","Rustheadshot", "Krunker Kill Sound", "Mini Crit", "Crit Hit"},
+	    	
+	    },
+	    
+	    ["Visuals.HitSounds.combobox"] = {
+	    	
+	    	Option = "skeet",
+	    	Options = {"Bleep", "skeet","N-word", "neverlose","codHitMarker", "Rustheadshot", "Krunker Kill Sound", "Mini Crit", "Crit Hit"},
+	    	
+	    },
+        
+        ["Visuals.Skybox.ComboBox"] = {
+            Option = sv_skyname:GetString(),
+            Options = {sv_skyname:GetString()},
+        },
+
+        ["Visuals.ESPDistance.slider"] =  1500,
+
+        ["Visuals.FakeAngMaterial.combobox"] = {
+        	Option = "DebugWhite",
+	    	Options = {"DebugWhite", "Flat", "WireFrame", "Glow"},
+        },
+		["Visuals.BoxType.combobox"] = {
+			Option = "Outlined",
+			Options = {"Outlined", "not Outlined :("},
+		},
+        ["Visuals.Kill.Effect.combobox"] = {	
+	    	Option = "powercore_embers_red",
+	        Options = killeffects,
+	    },
+        ["Visuals.Hit.Effect.combobox"] = {	
+	    	Option = "underworld_skull_zap",
+	        Options = killeffects,
+	    },
+        ["Visuals.Hats.combobox"] = {
+	    	Option = "unusual_nether_blue",
+	        Options = hats,
+	    },
+        ["Visuals.effect.combobox"] = {
+	    	Option = "powerup_king_blue",
+	        Options = feetraces,
+	    },
+
+		["Aim.ChamsForBacktrack.combobox"] = {
+			Option = "PulseFrame",
+	    	Options = {"flat", "glow", "metallic", "wireframe", "fireframe", "PulseFrame", "islandwater", "islandframe","CodFrame", "Darkmatter"},
+		},
+
+		["Aim.BacktrackColor.colormixer"] = Color(255,0,0),
+
+		["Visuals.Sky.ColorModulation.colormixer"] = Color(0,255,0),
+        ["Visuals.viewmodelPostion.combobox"] = true,
+        ["Visuals.HitSounds.CheckBox"] = true,
+        ["Visuals.ViewModelx.slider"] = 0,
+        ["Visuals.ViewModely.slider"] = -1,
+        ["Visuals.ViewModelz.slider"] = -3,
+        ["Visuals.ViewModelPitch.slider"] = 0,
+        ["Visuals.ViewModelYaw.slider"] = 0,
+        ["Visuals.ViewModelRole.slider"] = 0,
+        
+        ["Visuals.Thirdperson.Fov.slider"] = 80,
+        
+        ["Visuals.World.ColorModulation.colormixer"] = Color(50,50,50,255),
+
+        ["Visuals.ZoomFov.slider"] = 40,
+
+        ["Visuals.AspectRatio.slider"] = 1.8,
+    
+		["tab.slider"] = 15.9,
+		["tab.colormixer"] = Color(255, 0, 0, 255),
+		["tab.textentry"] = "entry text",
+
+--------------------------------------------------------------------------
+
+		["settings.menu.button"] = KEY_INSERT,
+		["settings.unload"] = nil,
+		["settings.config"] = {
+			Option = "",
+			Options = {},
+		},
+
+		["settings.config.name"] = "",
+		["settings.config.rename"] = nil,
+		["settings.config.save"] = nil,
+		["settings.config.load"] = nil,
+		["settings.config.delete"] = nil,-- 187, 60, 60
+		["Misc.TitleBarsAndButtons.colormixer"] = Color( 170, 7, 7 ),
+		["Misc.MenuText.colormixer"] = Color( 205,205,205,255  ),
+        ["Misc.OutlINES.colormixer"] = Color( 0, 0, 0 ),
+        ["Misc.MenuTransparency.colormixer"] = Color(35,35,35,255),
+        ["Misc.Background.colormixer"] = Color(0,0,0, 0),
+        ["Misc.crosshairDetails.colormixer"] = Color(255,255,255),
+		["Misc.CreditButer.textentry"] = "0",
+
+        WasKeyDown = {},
+        IsDown = {},
+        IsPressed = {},
+	},
+
+	LayoutTable = {
+
+--------------------------------------------------------------------------
+-- Use this for reference, comment it out whenever.
+-- The "Variable" is the value of the data type of the gui element which is supposed to be set above by first identifying it by a config variable.
+-- You can also align the elements using "Align" which you set to a string either "Center" or "Right", "Left" is set automatically.
+
+		{Title = "Aim", Controls = {
+			{Type = "CheckBox", Text = "Aimbot", Variable = "Aim.Aimbot.checkbox"},
+			{Type = "ComboBox", Text = "Aimbot Type", Variable = "Aim.AimbotType.combobox"},
+			{Type = "ComboBox", Text = "Body part", Variable = "Aim.AimbotBones.combobox"},
+			{Type = "Binder", Text = "Bind", Variable = "Aim.binder"},
+            {Type = "Slider", Align = "Left", Text = "Aimbot Fov", Minimum = 1, Maximum = 180, Decimals = 0, Variable = "Aim.Fov.slider"},
+            {Type = "CheckBox", Align = "Left", Text = "Auto Shoot", Variable = "Aim.AutoShoot.combobox"},
+            {Type = "CheckBox", Align = "Left", Text = "Ignore Team", Variable = "Aim.Team.combobox"},
+            {Type = "CheckBox", Align = "Left", Text = "Ignore ply on car", Variable = "Aim.car.combobox"},
+            {Type = "CheckBox", Align = "Left", Text = "Ignore Admins & superAdmins", Variable = "Aim.IgnoreAdmins.combobox"},
+            {Type = "CheckBox", Align = "Left", Text = "Ignore Build mode Players", Variable = "Aim.IgnoreBuild.combobox"},
+            {Type = "CheckBox", Align = "Left", Text = "ignore bots", Variable = "Aim.Ignorebot.combobox"},
+			{Type = "CheckBox", Align = "Right", Text = "NoSpread", Variable = "Aim.Nospread.combobox"},
+			{Type = "CheckBox", Align = "Right", Text = "NoRecoil", Variable = "Aim.Recoil.combobox"},
+            {Type = "ComboBox", Align = "Right", Text = "Compensation method", Variable = "Aim.CompMethod.combobox"},
+			{Type = "CheckBox", Align = "Right", Text = "Extrapolation", Variable = "Aim.Extrapolation.combobox"},
+            --{Type = "ExtraPanel", Align = "Right"},
+            {Type = "CheckBox", Align = "Right",Text = "0 Interp", Variable = "Aim.0Interp.checkbox"},
+            {Type = "CheckBox", Align = "Right",Text = "Engine Prediction", Variable = "Aim.EnginePred.checkbox"},
+            {Type = "CheckBox", Align = "Right",Text = "????", Variable = "Aim.?.checkbox"},
+			{Type = "CheckBox", Align = "Right",Text = "Seed Nospread", Variable = "Aim.Seednospread.checkbox"},
+			{Type = "Slider", Align = "Right", Text = "Ammount", Minimum = 1, Maximum = 250, Variable = "Aim.SeedAmmount.slider"},
+
+            {Type = "CheckBox", Align = "Right",Text = "Multi-Points", Variable = "Aim.MultiPoint.checkbox"},
+			{Type = "Slider", Align = "Right", Text = "Ammount", Minimum = 0, Maximum = 100, Variable = "Aim.MultiPoint.slider"},
+
+			{Type = "CheckBox", Align = "Center", Text = "TriggerBot", Variable = "Aim.TriggerBot.checkbox"},
+			{Type = "Binder", Align = "Center", Text = "Bind", Variable = "Aim.Triggerbot.binder"},
+
+			{Type = "CheckBox", Align = "Left", Text = "Aimbot Fov", Variable = "Aim.Aimbot.fovCircleColor.checkbox"},
+			{Type = "Decreser", Align = "Left"},
+			{Type = "ColorMixer", Align = "Left", Text = "", Variable = "Aim.fovCircleColor.colormixer"},
+            
+			{Type = "CheckBox", Align = "Left", Text = "Snap Line", Variable = "Aim.Aimbot.Target.checkbox"},
+			{Type = "Decreser", Align = "Left"},
+			{Type = "ColorMixer", Align = "Left", Text = "", Variable = "Aim.Aimbot.Target.colormixer"},
+            {Type = "CheckBox", Align = "Center", Text = "BackTrack", Variable = "Aim.BackTrack.checkbox"},
+			{Type = "Decreser", Align = "Center"},
+			{Type = "ColorMixer", Align = "Center", Text = "", Variable = "Aim.BacktrackColor.colormixer"},
+			{Type = "ComboBox", Align = "Center", Text = "Chams Material", Variable = "Aim.ChamsForBacktrack.combobox"},
+            {Type = "Slider", Align = "Center", Text = "Miliseconds", Minimum = 0, Maximum = 1, Decimals = 1, Variable = "Aim.BacktrackMS.slider"}
+		}},
+
+--------------------------------------------------------------------------
+
+		{Title = "Rage", Controls = {
+			    
+			    {Type = "CheckBox", Text = "Anti Aim", Variable = "Rage.AntiAim.checkbox"},
+				{Type = "Label", Text = "Real Angle"},
+				{Type = "ComboBox", Text = "Yaw", Variable = "Rage.AntiAim.yaw.combobox"},
+				{Type = "ComboBox", Text = "Pitch", Variable = "Rage.AntiAim.pitch.combobox"},
+				{Type = "Slider", Text = "Pitch", Minimum = -89, Maximum = 89, Variable = "Rage.Pitch.slider"},
+				{Type = "Slider", Text = "Yaw", Minimum = -180, Maximum = 180, Variable = "Rage.Yaw.slider"},
+				{Type = "Slider", Text = "Spin speed", Minimum = 10, Maximum = 1500, Variable = "Rage.Spin.slider"},
+				{Type = "Label", Text = "Fake Angle"},
+				{Type = "ComboBox", Text = "Yaw", Variable = "Rage.Fake AntiAim.yaw.combobox"},
+				{Type = "ComboBox", Text = "Pitch", Variable = "Rage.Fake.AntiAim.pitch.combobox"},
+				{Type = "Slider", Text = "Pitch", Minimum = -89, Maximum = 89, Variable = "Rage.FakePitch.slider"},
+				{Type = "Slider", Text = "Yaw", Minimum = -180, Maximum = 180, Variable = "Rage.FakeYaw.slider"},
+				{Type = "Slider", Text = "Spin speed", Minimum = 10, Maximum = 1500, Variable = "Rage.FakeSpin.slider"},
+				{Type = "CheckBox", Align = "Right", Text = "BruteForce Resolver", Variable = "Rage.Resolver.checkbox"},
+				{Type = "CheckBox", Align = "Right", Text = "AA shoot", Variable = "Rage.AAshoot.checkbox"},
+				{Type = "CheckBox", Align = "Right", Text = "Freeze Sim time", Variable = "Rage.SimTimeFRZ.checkbox"},
+				{Type = "CheckBox", Align = "Right", Text = "Emotes", Variable = "Rage.Emotes.checkbox"},
+                {Type = "ComboBox", Align = "Right", Text = "", Variable = "Rage.Emotes.combobox"},
+				{Type = "CheckBox", Align = "Right", Text = "Sequence Manip", Variable = "Rage.Sequencem.checkbox"},
+				{Type = "Slider", Align = "Right", Text =  "Out sequence", Minimum = 1, Maximum = 310, Variable = "Rage.Sequencem.slider"},
+				{Type = "Slider", Align = "Right", Text =  "Minimum sequence", Minimum = 1, Maximum = 310, Variable = "Rage.OutSequencem.slider"},
+                {Type = "Binder",   Align = "Right",  Text = "Bind", Variable = "Visuals.sequencem.binder"},
+                {Type = "CheckBox", Align = "Center", Text = "DoubleTap", Variable = "Rage.DoubleTap.checkbox"},
+				{Type = "Slider", Align = "Center", Text =  "Intensity", Minimum = 1, Maximum = 5, Variable = "Rage.DoubleTap.slider"},
+                {Type = "CheckBox", Align = "Center", Text = "Fake Lag", Variable = "Rage.FakeLag.checkbox"},
+				{Type = "Slider", Align = "Center", Text =  "Choked Packets", Minimum = 1, Maximum = 100, Variable = "Rage.FakeLag.slider"},
+                {Type = "CheckBox", Align = "Center", Text = "Dump Bot", Variable = "Rage.DumpBot.checkbox"},
+                {Type = "Binder",   Align = "Center",  Text = "Bind", Variable = "Visuals.DumpBot.binder"},
+                {Type = "CheckBox", Text = "Fake Angle Chams", Variable = "Rage.FakeAngChams.checkbox"},
+				{Type = "Decreser", Align = "Left"},
+                {Type = "ColorMixer", Align = "Left", Text = "", Variable = "Visuals.FakeAngChams.colormixer"},
+                {Type = "ComboBox", Align = "Left", Text = "Material", Variable = "Visuals.FakeAngMaterial.combobox"},
+			
+		}},
+
+        {Title = "Esp", Controls = {
+            {Type = "Label",  Align = "Center", Text = "ESPN"},
+            {Type = "CheckBox",  Align = "Center", Text = "Enable", Variable = "Visuals.EnableESP.checkbox"},
+            {Type = "CheckBox",  Align = "Center", Text = "2D Box", Variable = "Visuals.2DBox.checkbox"},
+			{Type = "Decreser", Align = "Center"},
+            {Type = "ColorMixer", Align = "Center", Text = "", Variable = "Visuals.2DBox.colormixer"},
+			{Type = "ComboBox", Align = "Center", Text = "Type of Box", Variable = "Visuals.BoxType.combobox"},
+			{Type = "CheckBox",  Align = "Center", Text = "Health Bar", Variable = "Visuals.Healthbar.checkbox"},
+			{Type = "Decreser", Align = "Center"},
+            {Type = "ColorMixer", Align = "Center", Text = "", Variable = "Visuals.HealthBar.colormixer"},
+            {Type = "CheckBox",  Align = "Center", Text = "Fill Box", Variable = "Visuals.FillBox.checkbox"},
+			{Type = "Decreser", Align = "Center"},
+            {Type = "ColorMixer", Align = "Center", Text = "", Variable = "Visuals.FillBox.colormixer"},
+			{Type = "CheckBox", Align = "Center", Text = "Name", Variable = "Visuals.Name.checkbox"},
+			{Type = "Decreser",Align = "Center"},
+			{Type = "ColorMixer", Align = "Center", Text = "", Variable = "Visuals.Name.colormixer"},
+			{Type = "CheckBox", Align = "Center", Text = "Armour ", Variable = "Visuals.Armor.checkbox"},
+			{Type = "Decreser", Align = "Center"},
+			{Type = "ColorMixer", Align = "Center", Text = "", Variable = "Visuals.Armor.colormixer"},
+			{Type = "CheckBox", Align = "Center", Text = "Weapon", Variable = "Visuals.WeaponESP.checkbox"},
+			{Type = "Decreser", Align = "Center"},
+            {Type = "ColorMixer", Align = "Center", Text = "", Variable = "Visuals.WeaponESP.colormixer"},
+			{Type = "CheckBox", Align = "Center", Text = "Job", Variable = "Visuals.JobESP.checkbox"},
+			{Type = "Decreser", Align = "Center"},
+            {Type = "ColorMixer", Align = "Center", Text = "", Variable = "Visuals.job.colormixer"},
+			{Type = "CheckBox", Align = "Center", Text = "UserGroup", Variable = "Visuals.UserGroupESP.checkbox"},
+			{Type = "Decreser", Align = "Center"},
+            {Type = "ColorMixer", Align = "Center", Text = "", Variable = "Visuals.UserGroup.colormixer"},
+        	{Type = "CheckBox",  Align = "Center",Text = "Line", Variable = "Visuals.Line.checkbox"},
+			{Type = "Decreser", Align = "Center"},
+			{Type = "ColorMixer", Align = "Center", Text = "", Variable = "Visuals.Line.colormixer"},
+
+            {Type = "CheckBox",  Align = "Center",Text = "Skeleton", Variable = "Visuals.Skeleton.checkbox"},
+            {Type = "Decreser", Align = "Center"},
+			{Type = "ColorMixer", Align = "Center", Text = "", Variable = "Visuals.Skeleton.colormixer"},
+	
+            {Type = "Slider", Align = "Center", Text = "Distance Ammount", Minimum = 1, Maximum = 20000, Variable = "Visuals.ESPDistance.slider"},
+            {Type = "CheckBox",Align = "Right", Text = "Ignore Tm8's", Variable = "Visuals.IgnoreTM8.checkbox"},
+            {Type = "CheckBox",Align = "Right", Text = "Ignore BuildMode Players", Variable = "Visuals.IgnoreBuildmode.checkbox"},
+            {Type = "CheckBox",Align = "Right", Text = "Ignore Players in Vehicles", Variable = "Visuals.Ignorevch.checkbox"},
+            {Type = "CheckBox",Align = "Right", Text = "Ignore Bots", Variable = "Visuals.IgnoreBots.checkbox"},
+            {Type = "CheckBox",Align = "Right", Text = "Ignore Admins", Variable = "Visuals.IgnoreAdmins.checkbox"},
+            {Type = "CheckBox",Align = "Right", Text = "Ignore Players in Spawn", Variable = "Visuals.IgnoreSpawn.checkbox"},
+			{Type = "TrumpImage", Align = "Left"},
+			{Type = "Label",    Align = "Right", Text = "Chams"},
+			{Type = "CheckBox", Align = "Right", Text = "Chams", Variable = "Visuals.Chams.checkbox"},
+			{Type = "Decreser", Align = "Right"},
+			{Type = "ColorMixer", Align = "Right", Text = "", Variable = "Visuals.Chams.colormixer"},
+			{Type = "ComboBox", Align = "Right", Text = "Material", Variable = "Visuals.Chams.Material.combobox"}
+		}},
+	
+		{Title = "Visuals", Controls = {
+			
+			{Type = "Label",    Align = "Center", Text = "View Model Chams"},
+			{Type = "CheckBox", Align = "Center", Text = "Arms", Variable = "Visuals.Arms.Chams.combobox"},
+			{Type = "Decreser", Align = "Center"},
+			{Type = "ColorMixer", Align = "Center", Text = "", Variable = "Visuals.Arms.Chams.colormixer"},
+			{Type = "ComboBox", Align = "Center", Text = "Material", Variable = "Visuals.Arms.Material.combobox"},
+			{Type = "CheckBox", Align = "Center", Text = "Weapon", Variable = "Visuals.Weapon.Chams.combobox"},
+			{Type = "Decreser", Align = "Center"},
+			{Type = "ColorMixer", Align = "Center", Text = "", Variable = "Visuals.Weapon.Chams.colormixer"},
+			{Type = "ComboBox", Align = "Center", Text = "Material", Variable = "Visuals.Weapon.Material.combobox"},
+			{Type = "Label",    Align = "Right", Text = "World"},
+			{Type = "CheckBox", Align = "Right", Text = "Skybox Changer", Variable = "Visuals.Skybox.Changer.combobox"},
+			{Type = "ComboBox", Align = "Right", Text = "Skybox", Variable = "Visuals.Skybox.ComboBox"},
+			{Type = "CheckBox", Align = "Right", Text = "Sky Color Modulation", Variable = "Visuals.skycolor.combobox"},
+			{Type = "Decreser", Align = "Right"},
+			{Type = "ColorMixer", Align = "Right", Text = "", Variable = "Visuals.Sky.ColorModulation.colormixer"},
+			{Type = "CheckBox", Align = "Right", Text = "Fullbright", Variable = "Visuals.FullBright.combobox"},
+            {Type = "CheckBox", Align = "Right", Text = "Remove fake shit from map", Variable = "Visuals.FakeShit.combobox"},
+            {Type = "CheckBox", Align = "Right", Text = "World Modulation", Variable = "Visuals.WorldModulation.combobox"},
+			{Type = "Decreser", Align = "Right"},
+            {Type = "ColorMixer", Align = "Right", Text = "", Variable = "Visuals.World.ColorModulation.colormixer"},
+            {Type = "CheckBox", Align = "Left", Text = "Enable", Variable = "Visuals.EnableKillEffect.combobox"},
+			{Type = "ComboBox", Align = "Left", Text = "Kill Effect", Variable = "Visuals.Kill.Effect.combobox"},
+			{Type = "ComboBox", Align = "Left", Text = "Hit Effect", Variable = "Visuals.Hit.Effect.combobox"},
+			{Type = "Slider", Align = "Right", Text = "Aspect Ratio", Minimum = 0, Maximum = 10, Decimals = 1, Variable = "Visuals.AspectRatio.slider"},
+			{Type = "CheckBox", Align = "Center", Text = "Bullet Tracers", Variable = "Visuals.BulletTracers.combobox"},
+			{Type = "Decreser", Align = "Center"},
+			{Type = "ColorMixer", Align = "Center", Text = "", Variable = "Visuals.BulletTracers.Color.colormixer"},
+			{Type = "ComboBox", Align = "Center", Text = "Material", Variable = "Visuals.Bullet.Trace.Material.combobox"},
+			{Type = "Label",    Align = "Right", Text = "View Stuff"},
+            {Type = "CheckBox", Align = "Right", Text = "Enable FOV", Variable = "Visuals.EnableFOV.combobox"},
+			{Type = "Slider", Align = "Right", Text = "Field Of view", Minimum = 30, Maximum = 180, Variable = "Visuals.PlayeFOV.slider"},
+			{Type = "CheckBox", Align = "Right", Text = "Homigrad View", Variable = "Visuals.homigradview.combobox"},
+            {Type = "CheckBox", Align = "Right", Text = "Zoom", Variable = "Visuals.Zoom.combobox"},
+            {Type = "Slider", Align = "Right", Text = "Ammount of Zoom", Minimum = 1, Maximum = 80, Variable = "Visuals.ZoomFov.slider"},
+            {Type = "Binder",   Align = "Right",  Text = "Bind", Variable = "Visuals.BindZoom.binder"},
+            {Type = "CheckBox", Align = "Left", Text = "viewmodel Postion", Variable = "Visuals.viewmodelPostion.combobox"},
+            {Type = "Slider", Align = "Left", Text = " ViewModel x", Minimum = -80, Maximum = 100, Variable = "Visuals.ViewModelx.slider"},
+            {Type = "Slider", Align = "Left", Text = " ViewModel y", Minimum = -80, Maximum = 100, Variable = "Visuals.ViewModely.slider"},
+            {Type = "Slider", Align = "Left", Text = " ViewModel z", Minimum = -80, Maximum = 100, Variable = "Visuals.ViewModelz.slider"},
+            {Type = "Slider", Align = "Left", Text = " ViewModel Pitch", Minimum = -80, Maximum = 100, Variable = "Visuals.ViewModelPitch.slider"},
+            {Type = "Slider", Align = "Left", Text = " ViewModel Yaw", Minimum = -80, Maximum = 100, Variable = "Visuals.ViewModelYaw.slider"},
+            {Type = "Slider", Align = "Left", Text = " ViewModel Roll", Minimum = -80, Maximum = 100, Variable = "Visuals.ViewModelRole.slider"},
+			{Type = "CheckBox", Align = "Right", Text = "ThirdPerson", Variable = "Visuals.ThirdPerson.checkbox"},
+			{Type = "Slider", Align = "Right", Text = "ThirdPerson Field of View", Minimum = 30, Maximum = 180, Variable = "Visuals.Thirdperson.Fov.slider"},
+			{Type = "Binder",   Align = "Right",  Text = "Bind", Variable = "Visuals.ThirdPerson.binder"},
+			{Type = "Label", Align = "Right", Text = "DarkRP"},
+            {Type = "CheckBox", Align = "Right", Text = "Enable", Variable = "Visuals.EnableDarkRP.combobox"},
+			{Type = "CheckBox", Align = "Right", Text = "Printer ESP", Variable = "Visuals.PrinterESP.combobox"},
+			{Type = "Decreser", Align = "Right"},
+			{Type = "ColorMixer", Align = "Right", Text = "", Variable = "Visuals.PrinterESP.colormixer"},
+			{Type = "CheckBox", Align = "Right", Text = "BitcoinMiner ESP", Variable = "Visuals.BitcoinminerESP.combobox"},
+			{Type = "Decreser", Align = "Right"},
+			{Type = "ColorMixer", Align = "Right", Text = "", Variable = "Visuals.BitcoinminerESP.colormixer"},
+			{Type = "CheckBox", Align = "Right", Text = "The plug", Variable = "Visuals.DrugDealer.combobox"},
+			{Type = "Decreser", Align = "Right"},
+            {Type = "ColorMixer", Align = "Right", Text = "", Variable = "Visuals.DrugDL.colormixer"},
+			{Type = "Label", Align = "Center", Text = "TTT"},
+			{Type = "CheckBox", Align = "Center", Text = "Traitor finder", Variable = "Visuals.TraitorESP.combobox"},
+			{Type = "Label", Align = "Center", Text = "Exodium HUDS"},
+            {Type = "CheckBox", Align = "Center", Text = "Enable", Variable = "Visuals.ExodiumHUDSEnable.combobox"},
+			{Type = "CheckBox", Align = "Center", Text = "Exodium v2 HUD", Variable = "Visuals.ExodiumV2.combobox"},
+			{Type = "Label", Align = "Center", Text = "Local Player"},
+			{Type = "CheckBox", Align = "Center", Text = "Chams", Variable = "Visuals.LocalPlayer.Chams.checkbox"},
+			{Type = "Decreser", Align = "Center"},
+			{Type = "ColorMixer", Align = "Center", Text = "", Variable = "Visuals.LocalPlayer.Chams.colormixer"},
+			{Type = "ComboBox", Align = "Center", Text = "Material", Variable = "Visuals.LocalPlayer.Chams.Mat.combobox"},
+            {Type = "Label", Align = "Center", Text = "Weapon stuff"},
+            {Type = "CheckBox", Align = "Center", Text = "no sway", Variable = "Visuals.noSway.Peek"},
+			{Type = "CheckBox", Align = "Center", Text = "no Visual Recoil", Variable = "Visuals.novisualRecoil.Peek"},
+            {Type = "Label", Align = "Center", Text = "Fancy nigga shit"},
+            {Type = "CheckBox", Align = "Center", Text = "3D Box Hit", Variable = "Visuals.HitPlace.CheckBox"},
+			{Type = "Decreser", Align = "Center"},
+            {Type = "ColorMixer", Align = "Center", Text = "", Variable = "Visuals.HitPlace.colormixer"},
+            --[[
+            {Type = "CheckBox", Align = "Center", Text = "feet particle", Variable = "Visuals.feet.CheckBox"},
+            {Type = "ComboBox", Align = "Center", Text = "Particle effect", Variable = "Visuals.effect.combobox"},
+			{Type = "CheckBox", Align = "Left", Text = "Cosmetics", Variable = "Visuals.Hats.CheckBox"},
+            ]]
+			{Type = "ComboBox", Align = "Left", Text = "PlayerModel", Variable = "Visuals.PlayerModel.combobox"},
+            {Type = "ComboBox", Align = "Left", Text = "Hats", Variable = "Visuals.Hats.combobox"},
+           -- {Type = "CheckBox", Align = "Center", Text = "Hitboxes", Variable = "Visuals.feet.CheckBox"},
+			
+		}},
+		{Title = "Movement", Controls = {
+			
+			{Type = "CheckBox", Align = "Left", Text = "Bunny Hop", Variable = "Movement.movement.autojump"},
+			{Type = "ComboBox", Text = "Bunny hop Mode", Variable = "Movement.Select.bhop"},
+			{Type = "CheckBox", Align = "Right", Text = "Circle Strafe", Variable = "Movement.Circle.Strafe"},
+			{Type = "Binder",   Align = "Right",  Text = "Cirlce Strafe Key", Variable = "Movement.Circle.Strafe.binder"},
+			{Type = "CheckBox", Align = "Right", Text = "Auto Peek", Variable = "Movement.Auto.Peek"},
+            {Type = "Decreser", Align = "Right"},
+			{Type = "ColorMixer", Align = "Right", Text = "", Variable = "Movement.colormixer"},
+			{Type = "Binder",   Align = "Right",  Text = "Auto Peek Key", Variable = "Movement.Auto.Peek.binder"},
+			{Type = "CheckBox", Align = "Center", Text = "Walk Bot", Variable = "Movement.Walk.Bot.Peek"},
+			{Type = "Binder",   Align = "Center",  Text = "Walk Bot Key", Variable = "Movement.Walk.Bot.binder"},
+			{Type = "CheckBox", Align = "Left", Text = "Fake Duck", Variable = "Movement.Fake.kDuc.Peek"},
+			{Type = "Binder",   Align = "Left",  Text = "Fake Duck Key", Variable = "Movement.Fake.Duck.binder"},
+			{Type = "CheckBox", Align = "Left", Text = "AirStuck", Variable = "Movement.Air.Stuck.Peek"},
+			{Type = "Binder",   Align = "Left",  Text = "AirStuck Key", Variable = "Movement.Air.Stuck.binder"},
+			{Type = "CheckBox", Align = "Right", Text = "Slow Motion", Variable = "Movement.Slow.Motion.Peek"},
+			{Type = "Slider",   Align = "Right", Text = "Ammount", Minimum = 100, Maximum = 150, Variable = "Movement.slowmotion.slider"},
+            {Type = "Binder",   Align = "Right",  Text = "Bind", Variable = "Visuals.SlowMotion.binder"}
+		}},
+        
+		{Title = "Misc", Controls = {
+			{Type = "Binder", Text = "Menu Button", Variable = "settings.menu.button"},
+			{Type = "Button", Text = "Unload", Variable = "settings.unload"},
+			{Type = "ComboBox", Align = "Center", Text = "Config", Variable = "settings.config"},
+			{Type = "TextEntry", Align = "Center", Text = "Name", Variable = "settings.config.name"},
+			{Type = "Button", Align = "Center", Text = "Rename", Variable = "settings.config.rename"},
+			{Type = "Button", Align = "Center", Text = "Save", Variable = "settings.config.save"},
+			{Type = "Button", Align = "Center", Text = "Load", Variable = "settings.config.load"},
+			{Type = "Button", Align = "Center", Text = "Delete", Variable = "settings.config.delete"},
+			{Type = "CheckBox", Align = "Center", Text = "Anti OBS", Variable = "Misc.FUCKOBSNIGGA.Peek"},
+			{Type = "CheckBox", Align = "Center", Text = "RusElite Movement Fix", Variable = "Misc.RusEliteFix.Peek"},
+            {Type = "CheckBox", Align = "Center", Text = "Show Hitboxes", Variable = "Misc.Hit.Boxes.Peek"},
+			{Type = "CheckBox", Align = "Center", Text = "Disable Interpolation", Variable = "Misc.Interpolation.Peek"},
+            {Type = "CheckBox", Align = "Center", Text = "Debug Camera", Variable = "Misc.DebugCamera.Peek"},
+            {Type = "Binder",   Align = "Center",  Text = "Key", Variable = "Movement.DebugCamera.binder"},
+            {Type = "Label", Align = "Right", Text = "Cheat Protection"},
+            {Type = "CheckBox", Align = "Right", Text = "Anti cheat Finder", Variable = "Misc.Anticheat.Finder.Peek"},
+            {Type = "Label", Align = "Left", Text = ""},
+            {Type = "ColorMixer", Align = "Left", Text = "Menu Color", Variable = "Misc.TitleBarsAndButtons.colormixer"},
+            {Type = "ColorMixer", Align = "Left", Text = "Text Color", Variable = "Misc.MenuText.colormixer"},
+            {Type = "ColorMixer", Align = "Left", Text = "Outlines Color", Variable = "Misc.OutlINES.colormixer"},  
+			{Type = "ColorMixer", Align = "Left", Text = "BackGround menu", Variable = "Misc.MenuTransparency.colormixer"},
+            {Type = "ColorMixer", Align = "Left", Text = "Main Menu", Variable = "Misc.Background.colormixer"},
+            {Type = "CheckBox", Align = "Left", Text = "WaterMark", Variable = "Aim.WaterMark.checkbox"},
+			{Type = "CheckBox", Align = "Left", Text = "CrossHair Details", Variable = "Aim.crosshair.checkbox"},
+            {Type = "Decreser", Align = "Left"},
+            {Type = "ColorMixer", Align = "Left", Text = "", Variable = "Misc.crosshairDetails.colormixer"},
+            {Type = "Label", Align = "Right", Text = "smokes.gg stuff!"},
+            {Type = "CheckBox", Align = "Right", Text = "Buy Credit!", Variable = "Misc.CreditButer.checkbox"},
+            {Type = "Label", Align = "Right", Text = "Funny Shit"},
+            {Type = "CheckBox", Align = "Right", Text = "FlashLight spam", Variable = "Misc.FlashLight.checkbox"},
+            {Type = "Slider",   Align = "Right", Text = "speed of spam", Minimum = 1, Maximum = 10, Variable = "Movementflashspamm.slider"},
+            {Type = "CheckBox", Align = "Right", Text = "Toolgun spam", Variable = "Misc.Toolgun.checkbox"},
+            {Type = "Slider",   Align = "Right", Text = "speed of spam", Minimum = 1, Maximum = 10, Variable = "movement.tool.slider"},
+            {Type = "CheckBox", Align = "Right", Text = "Camera spam", Variable = "Misc.camera.checkbox"},
+            {Type = "Slider",   Align = "Right", Text = "speed of spam", Minimum = 1, Maximum = 10, Variable = "movement.Camera.slider"},
+			{Type = "CheckBox", Align = "Right", Text = "Spamm Mouse1", Variable = "Misc.SpammM1.checkbox"},
+			{Type = "Binder", 	Align = "Right",Text = "Bind", Variable = "settings.M1spamm.binder"},
+            {Type = "CheckBox", Align = "Center", Text = "Name Changer", Variable = "Misc.NameChanger.checkbox"},
+            {Type = "TextEntry", Align = "Center", Text = "Name", Variable = "Misc.NameChanger.textentry"},
+
+			{Type = "Label", Align = "Right", Text = "Hitsound"},
+			{Type = "CheckBox", Align = "Right", Text = "Enable", Variable = "Visuals.HitSounds.CheckBox"},
+			{Type = "ComboBox", Align = "Right", Text = "KillSounds", Variable = "Visuals.KillSounds.combobox"},
+			{Type = "ComboBox", Align = "Right", Text = "HitSounds", Variable = "Visuals.HitSounds.combobox"},
+		}},
+
+		{Title = "Lua", Controls = {
+            {Type = "ComboBox", Align = "Right", Text = "Lua Scripts", Variable = "lua.GetLuaFiles"},
+            {Type = "Button", Align = "Right", Text = "Load", Variable = "lua.Load"},
+            {Type = "Button", Align = "Right", Text = "Delete", Variable = "lua.Delete"},
+            {Type = "Button", Align = "Right", Text = "Run", Variable = "lua.Run"},
+		}},
+	},
+}	
+
+convar.SetFlags("r_aspectratio", FCVAR_NONE)
+convar.SetFlags("mat_fullbright", FCVAR_NONE)
+
+
+local function IsValid( object )
+
+	if ( !object ) then return false end
+
+	local isvalid = object.IsValid
+	if ( !isvalid ) then return false end
+
+	return isvalid( object )
+
+end
+
+local function ToScreen(Vect)
+    local ScreenX, ScreenY = engineclient.WorldToScreen(Vect)
+    local Data = {
+        x = ScreenX,
+        y = ScreenY
+    }
+    return Data
+end
+
+function exodium.InScreen(Victim)
+    local ToScreenView = ToScreen(Victim:GetPos())
+    return ToScreenView.x > 0 and ToScreenView.x < ScrW() and ToScreenView.y > 0 and ToScreenView.y < ScrH()
+end
+
+local function isPointInCircle(x, y, cirx, ciry, cirrad)
+    local dx, dy = x - cirx,  y - ciry
+    return (dx * dx + dy * dy) <= (cirrad * cirrad)
+end
+
+--local meta = luastate.GetMetaTable("Player")
+
+--[[
+function meta:GetEyeTrace()
+	if ( CLIENT ) then
+		local framenum = FrameNumber()
+
+		-- Cache the trace results for the current frame, unless we're serverside
+		-- in which case it wouldn't play well with lag compensation at all
+		if ( self.LastPlayerTrace == framenum ) then
+			return self.PlayerTrace
+		end
+
+		self.LastPlayerTrace = framenum
+	end
+
+	local tr = util.TraceLine( util.GetPlayerTrace( self ) )
+	self.PlayerTrace = tr
+
+	return tr
+end
+]]
+
+surface.CreateFont("x88Font", {
+	font = "Tahoma",
+	size = 17,
+	weight = 750,
+	outline = true,
+	antialias = false
+})
+
+surface.CreateFont("x88FontESP", {
+	font = "CreditsText	",
+	size = 14,
+	weight = 550,
+	outline = true,
+	antialias = false
+})
+
+surface.CreateFont("DermaDefault", {
+	font = "CreditsText",
+	size = 13,
+	weight = 800,
+	outline = false,
+	antialias = false
+})
+
+surface.CreateFont("NotificationsFont", {
+	font = "Tahoma",
+	size = 14,
+	weight = 550,
+	outline = true,
+	antialias = false
+})
+
+local Util = {
+	Buttons = {},
+	Hooks = {}
+}
+
+function Util.IsButtonPressed(Button)
+	if (Util.Buttons[Button] == nil) then
+		Util.Buttons[Button] = true
+	end
+
+	return input.IsButtonDown(Button) && !Util.Buttons[Button]
+end
+
+function Util.UpdateButtons()
+	for Button = BUTTON_CODE_NONE, BUTTON_CODE_COUNT do
+		Util.Buttons[Button] = input.IsButtonDown(Button)
+	end
+end
+
+function Util.AddHook(Event, Func)
+	hook.Add(Event, "Derama", Func)
+end
+
+function Util.RemoveHook(Event)
+	hook.Remove(Event, "Derama")
+end
+
+local Start,Duration = CurTime(), 0.4
+local NotificationsPLS = {}
+
+
+local function Notifications(text, YourColor,Warning)
+    table.insert(NotificationsPLS, {
+        text = text,
+        YourColor = YourColor or Derama.ConfigTable["Misc.TitleBarsAndButtons.colormixer"],
+        Warning = Warning,
+        startTime = CurTime(),
+        Duration = 2,
+        IsVisible = false
+    })
+end
+
+local function Nots()
+    local ShouldWe = {}
+    local FunnyHeight = 0
+    for k,v in pairs(NotificationsPLS) do
+        local FAK  = CurTime() - v.startTime
+        local Anim = math.ease.OutQuint(math.Clamp(FAK / 0.6, 0, 1))
+        local gradientMat = Material("vgui/gradient_up", "noclamp smooth")
+        local Val, Val2, TextL
+        local IsVis = false 
+        local Input = v.text
+        surface.SetFont("NotificationsFont")
+        local width, height = surface.GetTextSize( Input )
+
+        if FAK < v.Duration  then
+            Val   = Lerp(Anim, -200, width + 10) --400
+            Val2  = Lerp(Anim, -200, width + 10) --395
+            TextL = Lerp(Anim, -225, width + 5) --30
+        else
+            local ReturnAnim = math.ease.InCirc(math.Clamp((FAK - v.Duration) / 0.5, 0, 1))
+            Val   = Lerp(ReturnAnim, width + 10, -200)
+            Val2  = Lerp(ReturnAnim, width + 10, -200)
+            TextL = Lerp(ReturnAnim, width + 5, -225)
+
+            if ReturnAnim == 1 then
+                table.insert(ShouldWe, k)
+            end
+        end
+
+        local Pos  = FunnyHeight
+        local text = Pos + 10
+
+                --COLOOOOOOR
+
+		surface.SetDrawColor(Derama.ConfigTable["Misc.MenuTransparency.colormixer"])
+        surface.DrawRect( -1, Pos, Val, 35)
+
+        surface.SetDrawColor(Color(15,15,15,255))
+        surface.SetMaterial(gradientMat)
+        surface.DrawTexturedRect(-1, Pos, Val, 35)
+
+        surface.SetDrawColor(v.YourColor)
+        surface.DrawRect( -1, Pos, Val, 3)
+
+                //surface.SetDrawColor(Derama.ConfigTable["Misc.OutlINES.colormixer"])
+            // surface.DrawLine( -1, 53, Val - 2, 53)
+
+                --outline
+				surface.SetDrawColor(Derama.ConfigTable["Misc.OutlINES.colormixer"])
+        surface.DrawOutlinedRect(-1, Pos, Val, 35)
+        if v.Warning == true then
+            surface.SetTextColor(Color(252,255,0))
+        else
+            surface.SetTextColor(Derama.ConfigTable["Misc.MenuText.colormixer"])
+        end
+        surface.SetTextPos(TextL - width, Pos + height - 5)
+        surface.DrawText(Input)
+
+        FunnyHeight = FunnyHeight + (height * 2.3)
+    
+    end
+    for i = 1, #ShouldWe, 1 do
+        table.remove(NotificationsPLS, ShouldWe[i])
+    end
+end
+
+local GUI = {}
+
+function GUI.Label(ScrollPanel, Control, XPosition, YPosition)
+	if (!Control.Text) then
+		Control.Text = "This is a Label"
+	end
+
+	if (!Control.XPosition) then
+		Control.XPosition = 0
+	end
+
+	if (!Control.YPosition) then
+		Control.YPosition = 0
+	end
+
+	XPosition = XPosition + Control.XPosition
+	YPosition = YPosition + Control.YPosition
+
+	local Label = vgui.Create("DLabel", ScrollPanel)
+
+	Label:SetPos(XPosition, YPosition)
+	Label:SetTextColor(Color(0, 0, 0, 0))
+
+	Label.Paint = function(self, Width, Height)
+		self:SetText(Control.Text)
+
+		surface.SetFont("DermaDefault")
+
+		draw.SimpleTextOutlined(self:GetText(), "DermaDefault", 1, 0, Derama.ConfigTable["Misc.MenuText.colormixer"], TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP, 1, Color(0, 0, 0, 255 / 3))
+
+		self:SetWidth(surface.GetTextSize(self:GetText()) + 1)
+	end
+end
+
+function GUI.CheckBox(ScrollPanel, Control, XPosition, YPosition,Warning)
+	if (!Control.Text) then
+		Control.Text = "This is a CheckBox"
+	end
+
+	if (!Control.XPosition) then
+		Control.XPosition = 0
+	end
+
+	if (!Control.YPosition) then
+		Control.YPosition = 0
+	end
+
+	XPosition = XPosition + Control.XPosition
+	YPosition = YPosition + Control.YPosition
+
+	if (!Control.Variable) then
+		Control.Variable = Control.Text
+	end
+
+	if (!Derama.ConfigTable[Control.Variable]) then
+		Derama.ConfigTable[Control.Variable] = false
+	end
+
+	local CheckBox = vgui.Create("DCheckBoxLabel", ScrollPanel)
+
+	CheckBox:SetText(Control.Text)
+	CheckBox:SetPos(XPosition, YPosition)
+    
+	CheckBox.Label:SetTextColor(Color(0, 0, 0, 0))
+	CheckBox.Label:Dock(RIGHT)
+	CheckBox.Label:DockMargin(0, 0, 6, 0)
+
+	CheckBox.OnChange = function(self, Value)
+		Derama.ConfigTable[Control.Variable] = Value
+	end
+
+	CheckBox.Paint = function(self, Width, Height)
+		self:SetValue(Derama.ConfigTable[Control.Variable])
+	end
+
+	CheckBox.Button.Paint = function(self, Width, Height)
+		surface.SetDrawColor(Derama.ConfigTable["Misc.Background.colormixer"])
+
+		if (self:IsHovered() || CheckBox.Label:IsHovered()) then
+			surface.SetDrawColor(Derama.ConfigTable["Misc.Background.colormixer"])
+		end
+
+        
+
+		--surface.SetDrawColor(15,15,15,255)
+        --surface.DrawRect(0,0,Width, 24)
+
+		if (self:GetChecked()) then
+            surface.SetDrawColor(15, 15, 15, 255)
+            surface.DrawRect(0,0,Width, Height)
+
+			surface.SetDrawColor(Derama.ConfigTable["Misc.TitleBarsAndButtons.colormixer"])
+	        surface.SetMaterial(Material("vgui/gradient_down"))
+		    surface.DrawTexturedRect(0, 0, Width, Height)
+            
+			--surface.SetDrawColor(Derama.ConfigTable["Misc.TitleBarsAndButtons.colormixer"])
+			--surface.DrawOutlinedRect(2, 2, Width - 4, Height - 4)
+		end
+
+		surface.SetDrawColor(Derama.ConfigTable["Misc.OutlINES.colormixer"])--OutLines for Buttons
+		surface.DrawOutlinedRect(0, 0, Width, Height)
+	end
+
+	CheckBox.Label.Paint = function(self, Width, Height)
+        local TextCol = Derama.ConfigTable["Misc.MenuText.colormixer"]
+        if Warning == true then
+            TextCol = Color(201,214,45)
+        end
+		self:SetText(Control.Text)
+		surface.SetFont("DermaDefault")
+
+		draw.SimpleTextOutlined(self:GetText(), "DermaDefault", 1, 0, TextCol, TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP, 1, Color(0, 0, 0, 255 / 3))
+
+		self:SetWidth(surface.GetTextSize(self:GetText()) + 1)
+	end
+end
+
+function GUI.Image(ScrollPanel, Control, XPosition, YPosition)
+	if (!Control.XPosition) then
+		Control.XPosition = 0
+	end
+
+	if (!Control.YPosition) then
+		Control.YPosition = 0
+	end
+
+	--XPosition = XPosition + Control.XPosition
+	--YPosition = YPosition + Control.YPosition
+
+	local AmericanFlag = vgui.Create("DImage", ScrollPanel)
+    AmericanFlag:SetPos(XPosition, YPosition)
+    AmericanFlag:SetSize(190,380)
+    AmericanFlag:SetImage("materials/americanexec.png")
+	
+	AmericanFlag.PaintOver = function(self,w,h)
+		surface.SetDrawColor(Derama.ConfigTable["Misc.OutlINES.colormixer"])
+		surface.DrawOutlinedRect(0,0,w,h,1)
+
+		if Derama.ConfigTable["Visuals.EnableESP.checkbox"] then
+			if Derama.ConfigTable["Visuals.2DBox.checkbox"] then
+                surface.SetDrawColor(Color(0, 0, 0))
+                surface.DrawOutlinedRect(49,64,w - 98,h - 118,1)
+                surface.DrawOutlinedRect(51,66,w - 102,h - 122,1)
+
+				surface.SetDrawColor(Derama.ConfigTable["Visuals.2DBox.colormixer"])
+				surface.DrawOutlinedRect(50,65,w - 100,h - 120,1)
+			end
+			if Derama.ConfigTable["Visuals.Healthbar.checkbox"] then
+				surface.SetDrawColor(Color(0,0,0))
+				surface.DrawRect(46,65,w - 188,h - 122,1)
+
+				surface.SetDrawColor(Derama.ConfigTable["Visuals.HealthBar.colormixer"])
+				surface.DrawRect(46,65,w - 188,h - 120,1)--32 300
+			end
+			local Text = "Donald Trump"
+			local t_w,t_h = surface.GetTextSize(Text)
+			if Derama.ConfigTable["Visuals.Name.checkbox"] then
+				surface.SetFont( "x88FontESP" )
+				surface.SetTextColor(Derama.ConfigTable["Visuals.Name.colormixer"])
+				surface.SetTextPos( 0 + w / 2 - (t_w / 2), 50 ) 
+				surface.DrawText(Text)
+			end
+			if Derama.ConfigTable["Visuals.FillBox.checkbox"] then
+				surface.SetDrawColor(Derama.ConfigTable["Visuals.FillBox.colormixer"])
+				surface.DrawRect(50,65,w - 100,h - 120,1)
+			end
+		end
+	end
+end
+
+function GUI.Button(ScrollPanel, Control, XPosition, YPosition)
+	if (!Control.Text) then
+		Control.Text = "This is a Button"
+	end
+
+	if (!Control.XPosition) then
+		Control.XPosition = 0
+	end
+
+	if (!Control.YPosition) then
+		Control.YPosition = 0
+	end
+
+	XPosition = XPosition + Control.XPosition
+	YPosition = YPosition + Control.YPosition
+
+	if (!Control.Variable) then
+		Control.Variable = Control.Text
+	end
+
+	if (!Derama.ConfigTable[Control.Variable]) then
+		Derama.ConfigTable[Control.Variable] = function()
+			Error("There is no function for this button!")
+		end
+	end
+
+	local Button = vgui.Create("DButton", ScrollPanel)
+
+	Button:SetText(Control.Text)
+	Button:SetSize(190, 20)
+	Button:SetPos(XPosition, YPosition)
+	Button:SetTextColor(Color(0, 0, 0, 0))
+
+	Button.Paint = function(self, Width, Height)
+		surface.SetDrawColor(Derama.ConfigTable["Misc.Background.colormixer"])
+
+		surface.DrawRect(0, 0, Width, Height)
+		surface.SetDrawColor(Derama.ConfigTable["Misc.OutlINES.colormixer"])
+		surface.DrawOutlinedRect(0, 0, Width, Height)
+
+		draw.SimpleText(self:GetText(), "DermaDefault", Width / 2, Height / 2, Derama.ConfigTable["Misc.MenuText.colormixer"], TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+
+		if (Derama.ConfigTable[Control.Variable]) then
+			self.DoClick = Derama.ConfigTable[Control.Variable]
+		end
+	end
+end
+
+function GUI.Binder(ScrollPanel, Control, XPosition, YPosition)
+	if (!Control.Text) then
+		Control.Text = "This is a Binder"
+	end
+
+	if (!Control.XPosition) then
+		Control.XPosition = 0
+	end
+
+	if (!Control.YPosition) then
+		Control.YPosition = 0
+	end
+
+	XPosition = XPosition + Control.XPosition
+	YPosition = YPosition + Control.YPosition
+
+	GUI.Label(ScrollPanel, Control, XPosition, YPosition)
+
+	if (!Control.Variable) then
+		Control.Variable = Control.Text
+	end
+
+	if (!Derama.ConfigTable[Control.Variable]) then
+		Derama.ConfigTable[Control.Variable] = KEY_NONE
+	end
+
+	local Binder = vgui.Create("DBinder", ScrollPanel)
+
+	Binder:SetSize(190, 20)
+	Binder:SetPos(XPosition, YPosition + 15)
+	Binder:SetTextColor(Color(0, 0, 0, 0))
+
+	Binder.OnChange = function(self, Value)
+		Derama.ConfigTable[Control.Variable] = Value
+	end
+
+	Binder.Paint = function(self, Width, Height)
+		surface.SetDrawColor(Derama.ConfigTable["Misc.Background.colormixer"])
+
+		if (self:IsHovered()) then
+			surface.SetDrawColor(Derama.ConfigTable["Misc.Background.colormixer"])
+		end
+
+		if (self:IsDown()) then
+			surface.SetDrawColor(Derama.ConfigTable["Misc.Background.colormixer"])
+		end
+
+		surface.DrawRect(0, 0, Width, Height)
+		surface.SetDrawColor(Derama.ConfigTable["Misc.OutlINES.colormixer"])
+		surface.DrawOutlinedRect(0, 0, Width, Height)
+
+		draw.SimpleText(self:GetText(), "DermaDefault", Width / 2, Height / 2, Derama.ConfigTable["Misc.MenuText.colormixer"], TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+
+		if (!self.Trapping) then
+			self:SetValue(Derama.ConfigTable[Control.Variable])
+		end
+	end
+end
+
+function GUI.ComboBox(ScrollPanel, Control, XPosition, YPosition)
+	if (!Control.Text) then
+		Control.Text = "This is a ComboBox"
+	end
+
+	if (!Control.XPosition) then
+		Control.XPosition = 0
+	end
+
+	if (!Control.YPosition) then
+		Control.YPosition = 0
+	end
+
+	XPosition = XPosition + Control.XPosition
+	YPosition = YPosition + Control.YPosition
+
+	GUI.Label(ScrollPanel, Control, XPosition, YPosition)
+
+	if (!Control.Variable) then
+		Control.Variable = Control.Text
+	end
+
+	if (!Derama.ConfigTable[Control.Variable]) then
+		Derama.ConfigTable[Control.Variable] = {
+			Option = "",
+			Options = {}
+		}
+	end
+
+	local ComboBox = vgui.Create("DComboBox", ScrollPanel)
+
+	ComboBox:SetValue(Derama.ConfigTable[Control.Variable].Option)
+	ComboBox:SetSize(190, 20)
+	ComboBox:SetPos(XPosition, YPosition + 15)
+	ComboBox:SetTextColor(Color(0, 0, 0, 0))
+	ComboBox:SetSortItems(false)
+
+	ComboBox.DropButton:SetVisible(false)
+
+	ComboBox.OnSelect = function(self, Index, Value)
+		Derama.ConfigTable[Control.Variable].Option = Value
+	end
+
+	ComboBox.Paint = function(self, Width, Height)
+		self:SetValue(Derama.ConfigTable[Control.Variable].Option)
+
+		surface.SetDrawColor(Derama.ConfigTable["Misc.Background.colormixer"])
+
+		if (self:IsHovered()) then
+			surface.SetDrawColor(Derama.ConfigTable["Misc.Background.colormixer"])
+		end
+
+		if (self:IsHovered() && input.IsButtonDown(MOUSE_LEFT)) then
+			surface.SetDrawColor(Derama.ConfigTable["Misc.Background.colormixer"])
+		end
+
+		if (self:IsMenuOpen()) then
+			self.Menu:MoveToFront()
+
+			if (input.IsButtonDown(Derama.ConfigTable["settings.menu.button"])) then
+				self:CloseMenu()
+			end
+		end
+
+		surface.DrawRect(0, 0, Width, Height)
+		surface.SetDrawColor(Derama.ConfigTable["Misc.OutlINES.colormixer"])
+		surface.DrawOutlinedRect(0, 0, Width, Height)
+
+		draw.SimpleText(self:GetText(), "DermaDefault", 10, Height / 2, Derama.ConfigTable["Misc.MenuText.colormixer"], TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+		draw.SimpleText(self:IsMenuOpen() && "5" || "6", "Marlett", Width - 5, Height / 2, Color(0, 0, 0), TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
+	end
+
+	local OriginalOnMenuOpened = ComboBox.OnMenuOpened
+
+	ComboBox.OnMenuOpened = function(self, Menu)
+		OriginalOnMenuOpened(self, Menu)
+
+		local Children = Menu:GetCanvas():GetChildren()
+
+		for Index, Child in ipairs(Children) do
+			Child:SetTextColor(Color(0, 0, 0, 0))
+
+			Child.Paint = function(self, Width, Height)
+				surface.SetDrawColor(Derama.ConfigTable["Misc.MenuTransparency.colormixer"])
+				surface.DrawRect(0, 0, Width, Height)
+                
+				surface.SetDrawColor(Derama.ConfigTable["Misc.OutlINES.colormixer"])
+
+				if (Index == 1 && #Children > 1) then
+					surface.DrawOutlinedRect(0, -1, Width, Height + 2)
+				elseif (Index == #Children) then
+					surface.DrawOutlinedRect(0, -1, Width, Height + 1)
+				else
+					surface.DrawOutlinedRect(0, -1, Width, Height + 2)
+				end
+
+				draw.SimpleText(self:GetText(), "DermaDefault", 10, Height / 2, Derama.ConfigTable["Misc.MenuText.colormixer"], TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+			end
+		end
+	end
+
+	local OriginalOpenMenu = ComboBox.OpenMenu
+
+	ComboBox.OpenMenu = function(self, ControlOpener)
+		self:Clear()
+
+		local Options = Derama.ConfigTable[Control.Variable].Options
+
+		if (Options) then
+			for Index, Option in ipairs(Options) do
+				self:AddChoice(tostring(Option))
+			end
+		end
+
+		OriginalOpenMenu(self, ControlOpener)
+	end
+end
+
+function GUI.Slider(ScrollPanel, Control, XPosition, YPosition)    
+	if (!Control.Text) then
+		Control.Text = "This is a ComboBox"
+	end
+
+	if (!Control.XPosition) then
+		Control.XPosition = 0
+	end
+
+	if (!Control.YPosition) then
+		Control.YPosition = 0
+	end
+
+	XPosition = XPosition + Control.XPosition
+	YPosition = YPosition + Control.YPosition
+
+	GUI.Label(ScrollPanel, Control, XPosition, YPosition + 7)
+
+	if (!Control.Variable) then
+		Control.Variable = Control.Text
+	end
+
+	if (!Derama.ConfigTable[Control.Variable]) then
+		Derama.ConfigTable[Control.Variable] = 0
+	end
+
+	if (!Control.Minimum) then
+		Control.Minimum = -10
+	end
+
+	if (!Control.Maximum) then
+		Control.Maximum = 10
+	end
+
+	if (!Control.Decimals) then
+		Control.Decimals = 0
+	end
+
+	local Slider = vgui.Create("DNumSlider", ScrollPanel)
+
+	Slider:SetText(Control.Text)
+	Slider:SetSize(200, 20)
+	Slider:SetPos(XPosition - 5, YPosition + 20)
+	Slider:SetMin(Control.Minimum)
+	Slider:SetMax(Control.Maximum)
+	Slider:SetDecimals(Control.Decimals)
+
+	Slider.Label:SetVisible(false)
+	Slider.TextArea:SetVisible(false)
+
+	Slider.OnValueChanged = function(self, Value)
+		Derama.ConfigTable[Control.Variable] = math.Truncate(Value, self:GetDecimals())
+
+		if (Derama.ConfigTable[Control.Variable] == -0) then
+			Derama.ConfigTable[Control.Variable] = 0
+		end
+
+		self:SetValue(Derama.ConfigTable[Control.Variable])
+	end
+
+    local gradientMat = Material("vgui/gradient_down", "noclamp smooth")
+
+    Slider.Slider.Paint = function(self, Width, Height)
+        local Dragging = self:GetDragging()
+        local XPosition, YPosition = self.Knob:GetPos()
+        
+        surface.SetDrawColor(15, 15, 15, 255)
+        surface.DrawRect(5, YPosition, XPosition, Width)
+        surface.DrawRect(5, YPosition, XPosition + 5, Height)
+
+        /*
+        surface.SetDrawColor(Derama.ConfigTable["Misc.TitleBarsAndButtons.colormixer"])
+        surface.DrawRect(XPosition + 5, YPosition, 5, Width)
+        */
+        
+        surface.SetDrawColor(Derama.ConfigTable["Misc.TitleBarsAndButtons.colormixer"])
+        surface.SetMaterial(gradientMat)
+        surface.DrawTexturedRect(5, YPosition, XPosition + 5, Height)
+        
+        surface.SetDrawColor(Derama.ConfigTable["Misc.OutlINES.colormixer"])
+        surface.DrawOutlinedRect(5, YPosition, Width - 10, Height - 2)
+    end
+
+
+    Slider.PaintOver = function(self, Width, Height)
+		self:SetValue(Derama.ConfigTable[Control.Variable])
+        
+        --draw.SimpleTextOutlined(self:GetText(), "DermaDefault", 10, Hei*ght / 14, Derama.ConfigTable["Misc.MenuText.colormixer"], TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER, 1, Color(0, 0, 0, 255 / 3))
+        draw.SimpleTextOutlined(Derama.ConfigTable[Control.Variable], "DermaDefault", Width / 2, Height - 10, Derama.ConfigTable["Misc.MenuText.colormixer"], TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER, 1, Color(0, 0, 0, 255 / 3))--YEANIGGA
+	end
+
+	Slider.Slider.Knob.Paint = function(self, Width, Height)
+	end
+end
+
+local AlphaGrid = Material("gui/alpha_grid.png", "nocull")
+
+function GUI.ColorMixer(ScrollPanel, Control, XPosition, YPosition)
+	if (!Control.Text) then
+		Control.Text = "This is a ColorMixer"
+	end
+
+	if (!Control.XPosition) then
+		Control.XPosition = 0
+	end
+
+	if (!Control.YPosition) then
+		Control.YPosition = 0
+	end
+
+	XPosition = XPosition + Control.XPosition 
+	YPosition = YPosition + Control.YPosition
+
+	GUI.Label(ScrollPanel, Control, XPosition -175, YPosition)
+
+	if (!Control.Variable) then
+		Control.Variable = Control.Text
+	end
+
+	if (!Derama.ConfigTable[Control.Variable]) then
+		Derama.ConfigTable[Control.Variable] = Color(0, 0, 0, 0)
+	end
+
+	local Button = vgui.Create("DButton", ScrollPanel)
+
+	Button:SetText("")
+	Button:SetSize(15, 15)
+	Button:SetPos(XPosition, YPosition)
+	Button:SetTextColor(Color(0, 0, 0, 0))
+
+	Button.Paint = function(self, Width, Height)
+		surface.SetDrawColor(210, 210, 210, 255)
+		surface.SetMaterial(AlphaGrid)
+		surface.DrawTexturedRect(0, 0, Width, Height)
+		surface.SetDrawColor(Derama.ConfigTable[Control.Variable])
+		surface.DrawRect(0, 0, Width, Height)
+		surface.SetDrawColor(Derama.ConfigTable["Misc.OutlINES.colormixer"])
+		surface.DrawOutlinedRect(0, 0, Width, Height)
+	end
+
+	local ColorMixer = nil
+
+	Button.DoClick = function(self)
+		if (ColorMixer) then
+			ColorMixer:SetVisible(!ColorMixer:IsVisible())
+
+			return
+		end
+
+		ColorMixer = vgui.Create("DColorMixer", ScrollPanel)
+
+		ColorMixer:SetSize(190, 100)
+		ColorMixer:SetPos(XPosition - 175, YPosition)
+		ColorMixer:SetPalette(false)
+		ColorMixer:SetAlphaBar(true)
+		ColorMixer:SetWangs(false)
+		ColorMixer:SetColor(Derama.ConfigTable[Control.Variable])
+
+		ColorMixer.ValueChanged = function(self, Value)
+			Derama.ConfigTable[Control.Variable] = Value
+		end
+
+		ColorMixer.Paint = function(self, Width, Height)
+			self:MoveToFront()
+
+			if (self:GetColor() != Derama.ConfigTable[Control.Variable]) then
+				self:SetColor(Derama.ConfigTable[Control.Variable])
+			end
+
+			if (input.IsButtonDown(Derama.ConfigTable["settings.menu.button"])) then
+				self:SetVisible(!self:IsVisible())
+			end
+
+			if (!(self:IsHovered() || (self.HSV:IsHovered() || self.HSV.Knob:IsHovered()) || self.Alpha:IsHovered() || self.RGB:IsHovered()) && Util.IsButtonPressed(MOUSE_LEFT)) then
+				self:SetVisible(!self:IsVisible())
+			end
+		end
+
+		ColorMixer.HSV.Knob.Paint = function(self, Width, Height)
+			surface.SetDrawColor(210, 210, 210, 255)
+
+			if (self:IsHovered()) then
+				surface.SetDrawColor(230, 230, 230, 255)
+			end
+
+			if (ColorMixer.HSV.Dragging || self:IsDown()) then
+				surface.SetDrawColor(255, 255, 255, 255)
+			end
+
+			surface.DrawRect(3, 3, Width - 6, Height - 6)
+			surface.SetDrawColor(Derama.ConfigTable["Misc.OutlINES.colormixer"])
+			surface.DrawOutlinedRect(3, 3, Width - 6, Height - 6)
+		end
+	end
+end
+
+function GUI.TextEntry(ScrollPanel, Control, XPosition, YPosition)
+	if (!Control.Text) then
+		Control.Text = "This is a TextEntry"
+	end
+
+	if (!Control.XPosition) then
+		Control.XPosition = 0
+	end
+
+	if (!Control.YPosition) then
+		Control.YPosition = 0
+	end
+
+	XPosition = XPosition + Control.XPosition
+	YPosition = YPosition + Control.YPosition
+
+	GUI.Label(ScrollPanel, Control, XPosition, YPosition)
+
+	if (!Control.Variable) then
+		Control.Variable = Control.Text
+	end
+
+	if (!Derama.ConfigTable[Control.Variable]) then
+		Derama.ConfigTable[Control.Variable] = ""
+	end
+
+	local TextEntry = vgui.Create("DTextEntry", ScrollPanel)
+
+	TextEntry:SetSize(190, 20)
+	TextEntry:SetPos(XPosition, YPosition + 15)
+	TextEntry:SetUpdateOnType(true)
+
+    TextEntry:SetTextColor(Derama.ConfigTable["Misc.MenuText.colormixer"])
+    TextEntry:SetCursorColor(Derama.ConfigTable["Misc.MenuText.colormixer"])
+    TextEntry:SetHighlightColor(Derama.ConfigTable["Misc.MenuText.colormixer"])
+    TextEntry:SetPlaceholderColor(Derama.ConfigTable["Misc.MenuText.colormixer"])
+
+	TextEntry.OnValueChange = function(self, Value)
+		Derama.ConfigTable[Control.Variable] = Value
+	end
+
+	TextEntry.Paint = function(self, Width, Height)
+		self:SetValue(Derama.ConfigTable[Control.Variable])
+
+		if (input.IsButtonDown(Derama.ConfigTable["settings.menu.button"])) then
+			self:FocusNext()
+		end
+
+		surface.SetDrawColor(Derama.ConfigTable["Misc.Background.colormixer"])
+
+		surface.DrawRect(0, 0, Width, Height)
+		surface.SetDrawColor(Derama.ConfigTable["Misc.OutlINES.colormixer"])
+		surface.DrawOutlinedRect(0, 0, Width, Height)
+
+		draw.SimpleText(self:GetText(), "DermaDefault", 5, Height / 2, Derama.ConfigTable["Misc.MenuText.colormixer"], TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+	end
+end
+
+local Menu = {
+	Frame = nil,
+	ActiveTab = nil
+}
+
+function Menu.LayoutControls(ScrollPanel, TabTitle) -- Mother of god ;-;
+	for Index, Tab in ipairs(Derama.LayoutTable) do
+		if (Tab.Title == TabTitle) then
+			local Controls = Tab.Controls
+
+			if (Controls) then
+				local XPosition = 5
+				local LeftYPosition = 0
+				local CenterYPosition = 0
+				local RightYPosition = 0
+
+				for Index, Control in ipairs(Controls) do
+					if (!Control.Align || Control.Align == "Left" || (Control.Align != "Center" && Control.Align != "Right")) then
+						XPosition = 5
+
+						if (Control.Type == "Label") then
+							GUI.Label(ScrollPanel, Control, XPosition, LeftYPosition)
+						elseif (Control.Type == "CheckBox") then
+							GUI.CheckBox(ScrollPanel, Control, XPosition, LeftYPosition, Warning)
+						elseif (Control.Type == "Button") then
+							GUI.Button(ScrollPanel, Control, XPosition, LeftYPosition)
+
+							LeftYPosition = LeftYPosition + 5
+						elseif (Control.Type == "Binder") then
+							GUI.Binder(ScrollPanel, Control, XPosition, LeftYPosition)
+
+							LeftYPosition = LeftYPosition + 20
+						elseif (Control.Type == "ComboBox") then
+							GUI.ComboBox(ScrollPanel, Control, XPosition, LeftYPosition)
+
+							LeftYPosition = LeftYPosition + 20
+						elseif (Control.Type == "Slider") then
+							LeftYPosition = LeftYPosition - 10
+
+							GUI.Slider(ScrollPanel, Control, XPosition, LeftYPosition)
+
+							LeftYPosition = LeftYPosition + 55
+						elseif (Control.Type == "TextEntry") then
+							GUI.TextEntry(ScrollPanel, Control, XPosition, LeftYPosition)
+
+							LeftYPosition = LeftYPosition + 20
+						elseif (Control.Type == "ColorMixer") then
+							GUI.ColorMixer(ScrollPanel, Control, XPosition, LeftYPosition)
+						elseif (Control.Type == "Spacer") then
+							LeftYPosition = LeftYPosition + (Control.Space || 20)
+						end
+
+						LeftYPosition = LeftYPosition + 20
+					end
+
+					if (Control.Align == "Center") then
+						XPosition = 205
+
+						if (Control.Type == "Label") then
+							GUI.Label(ScrollPanel, Control, XPosition, CenterYPosition)
+						elseif (Control.Type == "CheckBox") then
+							GUI.CheckBox(ScrollPanel, Control, XPosition, CenterYPosition, Warning)
+						elseif (Control.Type == "Button") then
+							GUI.Button(ScrollPanel, Control, XPosition, CenterYPosition)
+
+							CenterYPosition = CenterYPosition + 5
+						elseif (Control.Type == "Binder") then
+							GUI.Binder(ScrollPanel, Control, XPosition, CenterYPosition)
+
+							CenterYPosition = CenterYPosition + 20
+						elseif (Control.Type == "ComboBox") then
+							GUI.ComboBox(ScrollPanel, Control, XPosition, CenterYPosition)
+
+							CenterYPosition = CenterYPosition + 20
+						elseif (Control.Type == "Slider") then
+							CenterYPosition = CenterYPosition - 10
+
+							GUI.Slider(ScrollPanel, Control, XPosition, CenterYPosition)
+
+							CenterYPosition = CenterYPosition + 55
+						elseif (Control.Type == "TextEntry") then
+							GUI.TextEntry(ScrollPanel, Control, XPosition, CenterYPosition)
+
+							CenterYPosition = CenterYPosition + 20
+						elseif (Control.Type == "ColorMixer") then
+							GUI.ColorMixer(ScrollPanel, Control, XPosition, CenterYPosition)
+						elseif (Control.Type == "Spacer") then
+							CenterYPosition = CenterYPosition + (Control.Space || 20)
+						end
+
+						CenterYPosition = CenterYPosition + 20
+					end
+
+					if (Control.Align == "Right") then
+						XPosition = 405
+
+						if (Control.Type == "Label") then
+							GUI.Label(ScrollPanel, Control, XPosition, RightYPosition)
+						elseif (Control.Type == "CheckBox") then
+							GUI.CheckBox(ScrollPanel, Control, XPosition, RightYPosition, Warning)
+						elseif (Control.Type == "Button") then
+							GUI.Button(ScrollPanel, Control, XPosition, RightYPosition)
+
+							RightYPosition = RightYPosition + 5
+						elseif (Control.Type == "Binder") then
+							GUI.Binder(ScrollPanel, Control, XPosition, RightYPosition)
+
+							RightYPosition = RightYPosition + 20
+						elseif (Control.Type == "ComboBox") then
+							GUI.ComboBox(ScrollPanel, Control, XPosition, RightYPosition)
+
+							RightYPosition = RightYPosition + 20
+						elseif (Control.Type == "Slider") then
+							RightYPosition = RightYPosition - 10
+
+							GUI.Slider(ScrollPanel, Control, XPosition, RightYPosition)
+
+							RightYPosition = RightYPosition + 55
+						elseif (Control.Type == "TextEntry") then
+							GUI.TextEntry(ScrollPanel, Control, XPosition, RightYPosition)
+
+							RightYPosition = RightYPosition + 20
+						elseif (Control.Type == "ColorMixer") then
+							GUI.ColorMixer(ScrollPanel, Control, XPosition, RightYPosition)
+						elseif (Control.Type == "Spacer") then
+							RightYPosition = RightYPosition + (Control.Space || 20)
+						end
+
+						RightYPosition = RightYPosition + 20
+					end
+				end
+			end
+		end
+	end
+end
+
+function GUI.Controls(ScrollPanel,Controls)
+
+	if (Controls) then
+
+		local XPosition = 5
+		local LeftYPosition = 0
+		local CenterYPosition = 0
+		local RightYPosition = 0
+
+		for Index, Control in ipairs(Controls) do
+
+			if (!Control.Align || Control.Align == "Left" || (Control.Align != "Center" && Control.Align != "Right")) then
+				XPosition = 5
+
+				if (Control.Type == "Label") then
+					GUI.Label(ScrollPanel, Control, XPosition, LeftYPosition)
+				elseif (Control.Type == "CheckBox") then
+					GUI.CheckBox(ScrollPanel, Control, XPosition, LeftYPosition)
+				elseif (Control.Type == "Button") then
+					GUI.Button(ScrollPanel, Control, XPosition, LeftYPosition)
+
+					LeftYPosition = LeftYPosition + 5
+				elseif (Control.Type == "Binder") then
+					GUI.Binder(ScrollPanel, Control, XPosition, LeftYPosition)
+
+					LeftYPosition = LeftYPosition + 20
+				elseif (Control.Type == "ComboBox") then
+					GUI.ComboBox(ScrollPanel, Control, XPosition, LeftYPosition)
+
+					LeftYPosition = LeftYPosition + 20
+				elseif (Control.Type == "Slider") then
+					LeftYPosition = LeftYPosition - 10
+
+					GUI.Slider(ScrollPanel, Control, XPosition, LeftYPosition)
+
+					LeftYPosition = LeftYPosition + 25
+				elseif (Control.Type == "TextEntry") then
+					GUI.TextEntry(ScrollPanel, Control, XPosition, LeftYPosition)
+
+					LeftYPosition = LeftYPosition + 20
+				elseif (Control.Type == "ColorMixer") then
+					GUI.ColorMixer(ScrollPanel, Control, XPosition + 175, LeftYPosition )
+				elseif (Control.Type == "Decreser") then
+					LeftYPosition = LeftYPosition - (Control.Space || 40)
+				elseif (Control.Type == "Increser") then
+					LeftYPosition = LeftYPosition + (Control.Space || 10)
+				elseif (Control.Type == "ExtraPanel") then
+					GUI.ExtraPanel(ScrollPanel, Control, XPosition, LeftYPosition)
+				elseif (Control.Type == "TrumpImage") then
+					GUI.Image(ScrollPanel, Control, XPosition, LeftYPosition)
+					
+					LeftYPosition = LeftYPosition + 80
+				end
+
+				if Control.OverrideY != nil then
+					LeftYPosition = LeftYPosition + Control.OverrideY
+				end
+
+				LeftYPosition = LeftYPosition + 20
+			end
+
+			if (Control.Align == "Center") then
+				XPosition = 205
+
+				if (Control.Type == "Label") then
+					GUI.Label(ScrollPanel, Control, XPosition, CenterYPosition)
+				elseif (Control.Type == "CheckBox") then
+					GUI.CheckBox(ScrollPanel, Control, XPosition, CenterYPosition, Warning)
+				elseif (Control.Type == "Button") then
+					GUI.Button(ScrollPanel, Control, XPosition, CenterYPosition)
+
+					CenterYPosition = CenterYPosition + 5
+				elseif (Control.Type == "Binder") then
+					GUI.Binder(ScrollPanel, Control, XPosition, CenterYPosition)
+
+					CenterYPosition = CenterYPosition + 20
+				elseif (Control.Type == "ComboBox") then
+					GUI.ComboBox(ScrollPanel, Control, XPosition, CenterYPosition)
+
+					CenterYPosition = CenterYPosition + 20
+				elseif (Control.Type == "Slider") then
+					CenterYPosition = CenterYPosition - 10
+
+					GUI.Slider(ScrollPanel, Control, XPosition, CenterYPosition)
+
+					CenterYPosition = CenterYPosition + 25
+				elseif (Control.Type == "TextEntry") then
+					GUI.TextEntry(ScrollPanel, Control, XPosition, CenterYPosition)
+
+					CenterYPosition = CenterYPosition + 20
+				elseif (Control.Type == "ColorMixer") then
+					GUI.ColorMixer(ScrollPanel, Control, XPosition + 175, CenterYPosition)
+				elseif (Control.Type == "Decreser") then
+					CenterYPosition = CenterYPosition - (Control.Space || 40)
+				elseif (Control.Type == "Increser") then
+					CenterYPosition = CenterYPosition + (Control.Space || 40)
+				elseif (Control.Type == "ExtraPanel") then
+					GUI.ExtraPanel(ScrollPanel, Control, XPosition, CenterYPosition)
+				elseif (Control.Type == "TrumpImage") then
+					GUI.Image(ScrollPanel, Control, XPosition, CenterYPosition)
+					
+					CenterYPosition = CenterYPosition + 285
+				end
+
+				if Control.OverrideY != nil then
+					CenterYPosition = CenterYPosition + Control.OverrideY
+				end
+
+				CenterYPosition = CenterYPosition + 20
+			end
+
+			if (Control.Align == "Right") then
+				XPosition = 405
+
+				if (Control.Type == "Label") then
+					GUI.Label(ScrollPanel, Control, XPosition, RightYPosition)
+				elseif (Control.Type == "CheckBox") then
+					GUI.CheckBox(ScrollPanel, Control, XPosition, RightYPosition, Warning)
+				elseif (Control.Type == "Button") then
+					GUI.Button(ScrollPanel, Control, XPosition, RightYPosition)
+
+					RightYPosition = RightYPosition + 5
+				elseif (Control.Type == "Binder") then
+					GUI.Binder(ScrollPanel, Control, XPosition, RightYPosition)
+
+					RightYPosition = RightYPosition + 20
+				elseif (Control.Type == "ComboBox") then
+					GUI.ComboBox(ScrollPanel, Control, XPosition, RightYPosition)
+
+					RightYPosition = RightYPosition + 20
+				elseif (Control.Type == "Slider") then
+					RightYPosition = RightYPosition - 10
+
+					GUI.Slider(ScrollPanel, Control, XPosition, RightYPosition)
+
+					RightYPosition = RightYPosition + 25
+				elseif (Control.Type == "TextEntry") then
+					GUI.TextEntry(ScrollPanel, Control, XPosition, RightYPosition)
+
+					RightYPosition = RightYPosition + 20
+				elseif (Control.Type == "ColorMixer") then
+					GUI.ColorMixer(ScrollPanel, Control, XPosition + 175, RightYPosition)
+				elseif (Control.Type == "Decreser") then
+					RightYPosition = RightYPosition - (Control.Space || 40)
+				elseif (Control.Type == "Increser") then
+					RightYPosition = RightYPosition + (Control.Space || 40)
+				elseif (Control.Type == "ExtraPanel") then
+					GUI.ExtraPanel(ScrollPanel, Control, XPosition, RightYPosition)
+				elseif (Control.Type == "TrumpImage") then
+					GUI.Image(ScrollPanel, Control, XPosition, RightYPosition)
+					
+					RightYPosition = RightYPosition + 80
+				end
+
+				if Control.OverrideY != nil then
+					RightYPosition = RightYPosition + Control.OverrideY
+				end
+				RightYPosition = RightYPosition + 20
+			end
+		end
+	end
+
+end
+
+function Menu.LayoutControls(ScrollPanel, TabTitle) -- Mother of god ;-;
+	for Index, Tab in ipairs(Derama.LayoutTable) do
+		if (Tab.Title == TabTitle) then
+            GUI.Controls(ScrollPanel,Tab.Controls)
+		end
+	end
+end
+
+function Menu.Render()
+	if (Menu.Frame) then
+		Menu.Frame:SetVisible(!Menu.Frame:IsVisible())
+		return
+	end
+    
+    local gradientMat = Material("vgui/gradient_down", "noclamp smooth")
+    local gradientMatUp = Material("vgui/gradient_up", "noclamp smooth")
+	Menu.Frame = vgui.Create("DFrame")
+
+	Menu.Frame:SetTitle("Exodium - Light edition")
+	Menu.Frame:SetSize(640, 480)
+	Menu.Frame:Center()
+    Menu.Frame:MakePopup()
+	Menu.Frame:SetScreenLock(true)
+	Menu.Frame.lblTitle:SetVisible(false)
+	Menu.Frame.btnMinim:SetVisible(false)
+	Menu.Frame.btnMaxim:SetVisible(false)
+	Menu.Frame.btnClose:SetVisible(false)
+    
+
+        Menu.Frame.Paint = function(self, Width, Height)
+            --[[
+            KS.BeginShadow()
+
+            local x,y = self:LocalToScreen(0, 0)
+            surface.SetDrawColor(255,0,0)
+            surface.DrawRect(x,y,Width, Height)
+
+            KS.EndShadow(1, 1, 1, 55, 1, 5, false)
+            ]]
+
+
+            surface.SetDrawColor(15,15,15,255)
+            surface.DrawRect(0,0,Width, 24)
+        
+            surface.SetDrawColor(Derama.ConfigTable["Misc.TitleBarsAndButtons.colormixer"])
+            surface.SetMaterial(Material("vgui/gradient_up"))
+            surface.DrawTexturedRect(0,0,Width, 24)
+
+            surface.SetDrawColor(Derama.ConfigTable["Misc.OutlINES.colormixer"])
+            surface.DrawOutlinedRect(0, 0, Width, 24)
+            surface.SetDrawColor(Derama.ConfigTable["Misc.MenuTransparency.colormixer"])
+            surface.DrawRect(0, 24, Width, Height - 24)
+            
+            surface.SetDrawColor(Color(15,15,15))
+            surface.SetMaterial(gradientMatUp)
+            surface.DrawTexturedRect(0, 24, Width, Height - 24)
+
+            surface.SetDrawColor(Derama.ConfigTable["Misc.OutlINES.colormixer"])--MENU OUTLINE
+            surface.DrawOutlinedRect(0, 23, Width, Height - 23)
+
+            draw.SimpleTextOutlined(self:GetTitle(), "DermaDefault", 6, 24 / 2, Derama.ConfigTable["Misc.MenuText.colormixer"], TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER, 1, Color(0, 0, 0, 255 / 3))
+        end
+
+        /*
+	
+    AmericanFlag = vgui.Create("DImage", Menu.Frame)
+    AmericanFlag:Dock(FILL)
+    AmericanFlag:SetSize(140,40)
+    AmericanFlag:SetImage("materials/oldahnga.png")
+
+    */
+
+	local PropertySheet = vgui.Create("DPropertySheet", Menu.Frame)
+    
+	PropertySheet.tabScroller:SetOverlap(1)
+
+	PropertySheet:Dock(FILL)
+	PropertySheet:DockMargin(0, 0, 0, 0)
+	PropertySheet:SetFadeTime(0)
+
+	local OriginalAddSheet = PropertySheet.AddSheet
+
+	PropertySheet.AddSheet = function(self, Label, Panel, Material, NoStretchX, NoStretchY, Tooltip)
+		local Sheet = OriginalAddSheet(self, Label, Panel, Material, NoStretchX, NoStretchY, Tooltip)
+
+		Sheet.Tab:SetTextColor(Color(0, 0, 0, 0))
+
+		Sheet.Tab.GetTabHeight = function(self)
+			return 20
+		end
+
+		Sheet.Tab.ApplySchemeSettings = function(self)
+			local LeftMargin, TopMargin, RightMargin, BottomMargin = PropertySheet.tabScroller:GetDockMargin()
+
+			self:SetSize((PropertySheet:GetWide() - LeftMargin) / #PropertySheet:GetItems(), self:GetTabHeight())
+
+			DLabel.ApplySchemeSettings(self)
+		end
+
+		Sheet.Tab.Paint = function(self, Width, Height)
+			if (self:GetText() == ActiveTab) then
+				PropertySheet:SetActiveTab(self)
+
+				ActiveTab = nil
+			end
+
+            surface.SetDrawColor(Color(15,15,15,255))
+			surface.DrawRect(1, 1, Width - 2, Height)
+
+			surface.SetDrawColor(Derama.ConfigTable["Misc.OutlINES.colormixer"])
+			surface.DrawOutlinedRect(0, 0, Width, Height)
+			surface.SetDrawColor(Derama.ConfigTable["Misc.TitleBarsAndButtons.colormixer"])
+			if (self:IsHovered()) then
+				surface.SetDrawColor(40, 40, 40)--niggaballs
+			end
+
+			if (PropertySheet:GetActiveTab() == self) then
+				surface.SetDrawColor(40, 40, 40)
+			end
+
+            surface.SetMaterial(gradientMat)
+            surface.DrawTexturedRect(1, 1, Width - 2, Height)
+
+			draw.SimpleTextOutlined(self:GetText(), "DermaDefault", Width / 2, Height / 2, Derama.ConfigTable["Misc.MenuText.colormixer"], TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER, 1, Color(0, 0, 0, 255 / 3))
+		end
+
+		return Sheet
+	end
+
+	PropertySheet.Paint = function(self, Width, Height)
+		surface.SetDrawColor(Derama.ConfigTable["Misc.Background.colormixer"])
+		surface.DrawRect(0, 20, Width, Height - 20)
+		surface.SetDrawColor(Derama.ConfigTable["Misc.OutlINES.colormixer"])
+		surface.DrawOutlinedRect(0, 20, Width, Height - 20)
+	end
+
+	local AddSheet = function(Control)
+		local ScrollPanel = vgui.Create("DScrollPanel", PropertySheet)
+
+		ScrollPanel:Dock(FILL)
+		ScrollPanel:DockMargin(5, 10, 10, 10)
+
+		ScrollPanel.VBar.Paint = function(self, Width, Height)
+			surface.SetDrawColor(Derama.ConfigTable["Misc.Background.colormixer"])
+			surface.DrawRect(0, 0, Width, Height)
+			surface.SetDrawColor(Derama.ConfigTable["Misc.OutlINES.colormixer"])
+			surface.DrawOutlinedRect(0, 0, Width, Height)
+		end
+
+		ScrollPanel.VBar.btnUp.Paint = function(self, Width, Height)
+			surface.SetDrawColor(Derama.ConfigTable["Misc.Background.colormixer"])
+
+			surface.DrawRect(0, 0, Width, Height)
+			surface.SetDrawColor(Derama.ConfigTable["Misc.OutlINES.colormixer"])
+
+			surface.DrawOutlinedRect(0, 0, Width, Height)
+		end
+    
+		ScrollPanel.VBar.btnGrip.Paint = function(self, Width, Height)
+            surface.SetDrawColor(Color(15,15,15,255))
+            surface.DrawRect(0, 0, Width, Height)
+
+			surface.SetDrawColor(Derama.ConfigTable["Misc.TitleBarsAndButtons.colormixer"])
+			if (self:IsHovered()) then
+				surface.SetDrawColor(Derama.ConfigTable["Misc.TitleBarsAndButtons.colormixer"])
+			end
+
+			if (self.Depressed) then
+				surface.SetDrawColor(Derama.ConfigTable["Misc.TitleBarsAndButtons.colormixer"])
+			end
+
+            surface.SetMaterial(gradientMat)
+            surface.DrawTexturedRect(0, 0, Width, Height)
+
+			DisableClipping(true)
+
+			surface.SetDrawColor(Derama.ConfigTable["Misc.OutlINES.colormixer"])--problem shit
+			surface.DrawOutlinedRect(0, 0, Width, Height + 1)
+
+			DisableClipping(false)
+		end
+
+		ScrollPanel.VBar.btnDown.Paint = function(self, Width, Height)
+			surface.SetDrawColor(Derama.ConfigTable["Misc.Background.colormixer"])
+
+			surface.DrawRect(0, 0, Width, Height)
+			surface.SetDrawColor(Derama.ConfigTable["Misc.OutlINES.colormixer"])
+			surface.DrawOutlinedRect(0, 0, Width, Height)
+		end
+
+		ScrollPanel.VBar.SetUp = function(self, BarSize, CanvasSize)
+			self.BarSize = BarSize
+			self.CanvasSize = math.max(CanvasSize - BarSize, 0.1)
+
+			self:DockMargin(0, 0, 0, 0)
+			self:SetEnabled(true)
+			self:InvalidateLayout()
+		end
+
+		PropertySheet:AddSheet(Control.Title, ScrollPanel)
+
+		Menu.LayoutControls(ScrollPanel, Control.Title)
+	end
+
+	for Index, Control in ipairs(Derama.LayoutTable) do
+		AddSheet(Control)
+	end
+end
+
+function Menu.Toggle()
+	if (Util.IsButtonPressed(Derama.ConfigTable["settings.menu.button"])) then
+		Menu.Render()
+	end
+end
+
+function Menu.Destroy()
+	if (Menu.Frame) then
+		Menu.Frame:Remove()
+
+		Menu.Frame = nil
+	end
+end
+
+local function RefreshConfigs()
+	if (!file.Exists(ConfigFolder, "DATA")) then
+		file.CreateDir(ConfigFolder)
+	end
+
+	Derama.ConfigTable["settings.config.name"] = ""
+	Derama.ConfigTable["settings.config"] = {
+		Option = "",
+		Options = {}
+	}
+
+	local Configs = {}
+	local Files, Folders = file.Find(ConfigFolder .. "/*.vtf", "DATA")
+
+	for Index, File in ipairs(Files) do
+		File = string.Replace(File, "." .. ConfigFileExtension, "")
+
+		table.insert(Configs, File)
+	end
+
+	Derama.ConfigTable["settings.config"].Options = Configs
+end
+
+RefreshConfigs()
+
+local function Buttons()
+	Derama.ConfigTable["settings.unload"] = function()
+		for EventName, Identifier in pairs(hook.GetTable()) do
+			Util.RemoveHook(EventName)
+		end
+
+		Menu.Destroy()
+	end
+
+	Derama.ConfigTable["settings.config.rename"] = function()
+		local Config = string.format("%s/%s.%s", ConfigFolder, Derama.ConfigTable["settings.config"].Option, ConfigFileExtension)
+
+		if (!file.Exists(Config, "DATA")) then
+			return
+		end
+
+		file.Rename(Config, string.format("%s/%s.%s", ConfigFolder, Derama.ConfigTable["settings.config.name"], ConfigFileExtension))
+
+		RefreshConfigs()
+	end
+
+	Derama.ConfigTable["settings.config.save"] = function()
+		if (string.len(Derama.ConfigTable["settings.config.name"]) <= 0) then
+			return
+		end
+
+		file.Write(string.format("%s/%s.%s", ConfigFolder, Derama.ConfigTable["settings.config.name"], ConfigFileExtension), util.TableToJSON(Derama.ConfigTable))
+
+		RefreshConfigs()
+	end
+
+	Derama.ConfigTable["settings.config.load"] = function()
+		local Config = string.format("%s/%s.%s", ConfigFolder, Derama.ConfigTable["settings.config"].Option, ConfigFileExtension)
+
+		if (!file.Exists(Config, "DATA")) then
+			return
+		end
+
+		Derama.ConfigTable = util.JSONToTable(file.Read(Config, "DATA"))
+
+		RefreshConfigs()
+		Buttons()
+	end
+
+	Derama.ConfigTable["settings.config.delete"] = function()
+		local Config = string.format("%s/%s.%s", ConfigFolder, Derama.ConfigTable["settings.config"].Option, ConfigFileExtension)
+
+		if (!file.Exists(Config, "DATA")) then
+			return
+		end
+
+		file.Delete(Config)
+
+		RefreshConfigs()
+	end
+end
+
+Buttons()
+
+local Aim = {}
+
+HitboxManager = {
+    tModelCache = {}
+}
+
+function HitboxManager:GenerateModelData(strModelPath)
+    strModelPath = strModelPath or "models/error.mdl"
+
+    -- Return cached data if available
+    if self.tModelCache[strModelPath] then
+        return self.tModelCache[strModelPath]
+    end
+
+    -- Open model file
+    local fileStream = file.Open(strModelPath, "rb", "GAME")
+    if not fileStream then 
+        self.tModelCache[strModelPath] = nil
+        return nil 
+    end
+
+    -- Verify model header
+    local strHeaderID = fileStream:Read(4)
+    if strHeaderID ~= "IDST" then 
+        fileStream:Close()
+        self.tModelCache[strModelPath] = nil
+        return nil 
+    end
+
+    print("Loading new model: ", strModelPath)
+
+    -- Parse model data
+    local tModelData = {}
+    tModelData.iVersion = fileStream:ReadLong()
+    tModelData.iChecksum = fileStream:ReadLong()
+
+    fileStream:Read(64) -- Skip model name
+
+    tModelData.iDataLength = fileStream:ReadLong()
+
+    fileStream:Read(12) -- Skip eyeposition
+    fileStream:Read(12) -- Skip illumposition
+
+    fileStream:Read(12) -- Skip hull_min
+    fileStream:Read(12) -- Skip hull_max
+
+    fileStream:Read(12) -- Skip view_bbmin
+    fileStream:Read(12) -- Skip view_bbmax
+
+    tModelData.iFlags = fileStream:ReadLong()
+
+    -- Parse bone data
+    tModelData.iBoneCount = fileStream:ReadLong()
+    tModelData.iBoneOffset = fileStream:ReadLong()
+
+    -- Parse bone controller data
+    tModelData.iBoneControllerCount = fileStream:ReadLong()
+    tModelData.iBoneControllerOffset = fileStream:ReadLong()
+
+    -- Parse hitbox data
+    tModelData.iHitboxCount = fileStream:ReadLong()
+    tModelData.iHitboxOffset = fileStream:ReadLong()
+
+    fileStream:Seek(tModelData.iHitboxOffset)
+
+    tModelData.iNameIndex = fileStream:ReadLong()
+    tModelData.iHitboxSetCount = fileStream:ReadLong()
+    tModelData.iHitboxIndex = fileStream:ReadLong()
+
+    fileStream:Seek(tModelData.iHitboxOffset + tModelData.iHitboxIndex)
+
+    tModelData.tHitboxes = {}
+
+    -- Parse valid hitboxes
+    for i = 1, tModelData.iHitboxSetCount do
+        local tHitbox = {}
+
+        tHitbox.iBone = fileStream:ReadLong()
+        tHitbox.iHitgroup = fileStream:ReadLong()
+
+        tHitbox.vMins = Vector(fileStream:ReadFloat(), fileStream:ReadFloat(), fileStream:ReadFloat())
+        tHitbox.vMaxs = Vector(fileStream:ReadFloat(), fileStream:ReadFloat(), fileStream:ReadFloat())
+        
+        tHitbox.vCenter = (tHitbox.vMins + tHitbox.vMaxs) / 2
+
+        tHitbox.iNameIndex = fileStream:ReadLong()
+
+        fileStream:Read(32) -- Skip unused data
+
+        table.insert(tModelData.tHitboxes, tHitbox)
+    end
+
+    fileStream:Close()
+
+    self.tModelCache[strModelPath] = tModelData
+    return tModelData
+end
+
+function HitboxManager:GetHitboxData(pEntity)
+    if not IsValid(pEntity) then return nil end
+    
+    local tModelData = self:GenerateModelData(pEntity:GetModel())
+    if not tModelData or not tModelData.tHitboxes then return nil end
+
+    pEntity:SetupBones()
+
+    -- Only track hitgroups we're interested in, discard others.
+    -- An excercise would be to adjust this table depending on some config
+    local tHitboxGroups = {
+        [HITGROUP_HEAD] = {},
+        --[HITGROUP_CHEST] = {},
+        [HITGROUP_STOMACH] = {},
+    }
+
+    for i = 1, #tModelData.tHitboxes do
+        local tHitbox = tModelData.tHitboxes[i]
+        if not tHitbox then continue end
+
+        local mMatrix = pEntity:GetBoneMatrix(tHitbox.iBone)
+        if not mMatrix then continue end
+
+        local vPosition, angRotation = mMatrix:GetTranslation(), mMatrix:GetAngles()
+        
+        local vMins, vMaxs = tHitbox.vMins, tHitbox.vMaxs
+
+        local vCenter = Vector(tHitbox.vCenter)
+        vCenter:Rotate(angRotation)
+
+        local tProcessedHitbox = {
+            vPosition = vPosition + vCenter,
+            angRotation = angRotation,
+            mMatrix = mMatrix,
+            vMins = vMins,
+            vMaxs = vMaxs,
+            iHitgroup = tHitbox.iHitgroup
+        }
+
+        if tHitboxGroups[tHitbox.iHitgroup] then
+            table.insert(tHitboxGroups[tHitbox.iHitgroup], tProcessedHitbox)
+        end
+    end
+
+    return tHitboxGroups
+end
+
+HitboxManager = HitboxManager or nil --require("hitboxmanager")
+
+if not HitboxManager then print(" YOU ARE AN IDIOT ") end
+
+local flNextBulletTime = 0
+hook.Add("Move", "yeah", function()
+	if not IsFirstTimePredicted() then return end
+
+    flNextBulletTime = CurTime() + engine.TickInterval()
+end)
+
+-- this takes a regular key (not an enum, an actual str	ing such as "f" or "alt" etc)
+-- and returns if thats being pressed this frame
+local function IsDown(strkey)
+    if IsValid(vgui.GetKeyboardFocus()) or input.IsKeyTrapping() or gui.IsGameUIVisible() then return end -- if you want to be aimbotting when typing, remove this
+    local keycode = input.GetKeyCode(strkey)
+    return input.IsMouseDown(keycode) or input.IsKeyDown(keycode)
+end
+
+local weaponBlacklist = {
+	["weapon_physgun"] = true
+}
+
+local ShootChecks = {
+    ["bobs"] = function(weapon) -- THIS IS FOR M9K. FIGURE IT OUT.
+        if not IsValid(weapon) then return false end
+        if not weapon:GetOwner():IsPlayer() then return false end
+        if weapon:GetOwner():KeyDown(IN_RELOAD) then return false end
+        if weapon:GetNWBool("Reloading", false) then return false end
+        if weapon:Clip1() <= 0 then return false end
+
+        return true
+    end
+}
+
+-- basically, if we are using a weapon that has multiple (or a weird) attack type, set it here.
+-- an exercise is think up some creative way to populate this table automatically.
+local AlternativeAttackTypes = {
+    ["weapon_swcs_revolver"] = {
+        IN_ATTACK,
+        IN_ATTACK2
+    }
+}
+
+local function GetWeaponBase(Weapon)
+    if not IsValid(weapon) then return -1 end
+    local strClass = Weapon:GetClass()
+    if not Weapon:IsScripted() then return "ENGINE" end
+
+    if Weapon.Base then
+        return string.Split(string.lower(Weapon.Base), "_")[1]
+    else
+        return -1
+    end
+end
+
+local function GetAttackType(cmd, Weapon)
+	local AttackType = IN_ATTACK -- Default attack type
+
+    if AlternativeAttackTypes[WepClass] then
+        for i = 1, #AlternativeAttackTypes[WepClass] do
+            local AltType = AlternativeAttackTypes[WepClass][i]
+            if cmd:KeyDown(AltType) then
+                AttackType = AltType
+            end
+        end
+    end
+
+	-- if you want to be a chad and handle weird weapons like the nyan gun (which has three attack types, one of which is a projectile) 
+	-- you can override here.
+
+	-- EXAMPLE:
+    --if predictedWeapons[WepClass] and cmd:KeyDown(predictedWeapons[WepClass].attackType) then
+    --    AttackType = predictedWeapons[WepClass].attackType
+    --end
+
+	return AttackType
+end
+
+/*
+
+
+local function CanShoot(WepClass, WepBase)-- Weapon, 
+	if weaponBlacklist[WepClass] then return end
+	
+    if Weapon:GetActivity() == ACT_RELOAD or (Weapon.Clip1 and Weapon:Clip1() ~= -1 and Weapon:Clip1() <= 0) then
+        return false
+    end
+	
+	local bOk = (ShootChecks[WepBase] and ShootChecks[WepBase](Weapon)) or ShootChecks[WepBase] == nil and true
+	return bOk
+end
+
+local function CanAttack(pWep, iAttackEnum, flWait)
+	flWait = flWait or 0
+	if iAttackEnum == IN_ATTACK then return pWep:GetNextPrimaryFire() + flWait <= flNextBulletTime end
+    if iAttackEnum == IN_ATTACK2 then return pWep:GetNextSecondaryFire() + flWait <= flNextBulletTime end
+
+	return flWait <= flNextBulletTime
+end
+*/
+
+local function PerformAttack(cmd, iAttackEnum)
+    if cmd:KeyDown(IN_SPEED) then cmd:RemoveKey(IN_SPEED) end
+    if cmd:KeyDown(IN_ZOOM) then cmd:RemoveKey(IN_ZOOM) end
+
+	cmd:RemoveKey(iAttackEnum)
+
+	cmd:SetButtons(bit.bor(cmd:GetButtons(), iAttackEnum))
+
+	-- Now, if you were fakelagging this tick, ensure that you are sending a packet here.
+	-- it makes your "snap" after firing a lot shorter. you do not want to be stuck with your angle facing your enemy any longer than you have to
+	-- otherwise you will be onshot
+
+	--if not bShouldSilent then 
+    --    bSendPacket = true
+    --end
+
+	return true
+end
+
+local function PerformAim(cmd, ang)
+    if Derama.ConfigTable["Aim.AimbotType.combobox"].Option == "Silent Aim" or "Normal" then
+	    cmd:SetViewAngles(ang)
+    --else
+       -- cmd:SetWorldClicking( true )
+       -- cmd:SetWorldClickDirection(ang:Forward())
+    end
+	return true
+end
+
+function Aim.FovRad()
+	local hhc = cw / hc * 3.6
+	local bbl = hhc * Derama.ConfigTable["Aim.Fov.slider"] 
+	return bbl
+end
+
+function Aim.AimbotFov()
+    if (!Derama.ConfigTable["Aim.Aimbot.checkbox"]) then return end
+
+    if Derama.ConfigTable["Aim.Aimbot.fovCircleColor.checkbox"] then
+        surface.DrawCircle(cw, hc, Aim.FovRad() - 1, Color(0,0,0))
+        surface.DrawCircle(cw, hc, Aim.FovRad() + 1, Derama.ConfigTable["Aim.fovCircleColor.colormixer"])
+        surface.DrawCircle(cw, hc, Aim.FovRad(), Derama.ConfigTable["Aim.fovCircleColor.colormixer"])
+        surface.DrawCircle(cw, hc, Aim.FovRad() + 1, Color(0,0,0))
+    end
+end
+
+/*
+exodium.FunnyBones = {
+    ["Head"] = HITGROUP_HEAD,
+    ["Chest"] = HITGROUP_CHEST,
+    ["Stomach"] = HITGROUP_STOMACH
+}
+*/
+
+exodium.FunnyBones = {
+    ["Head"] = "ValveBiped.Bip01_Head1",
+    ["Chest"] = "ValveBiped.Bip01_Pelvis",
+    ["Stomach"] = "ValveBiped.Bip01_Spine2"
+}
+
+local function GetValidHitbox(pTarget)
+	local tHitboxes = HitboxManager:GetHitboxData(pTarget)
+	local hChoose   = Derama.ConfigTable["Aim.AimbotBones.combobox"].Option
+	for iHitGroup, tData in pairs(tHitboxes) do
+		if iHitGroup ~= --[[ change this to whatever you want -----> ]] exodium.FunnyBones[hChoose] then continue end
+
+		for _, Hitbox in ipairs(tData) do
+			return Hitbox
+		end
+	end
+end
+
+local function GetAimPos(pTarget)
+	local ValidHitBox = GetValidHitbox(pTarget)
+
+	if not ValidHitBox then return pTarget:LocalToWorld(pTarget:OBBCenter()) end
+
+	local vAimPos = ValidHitBox.vPosition
+
+	if not vAimPos then return pTarget:LocalToWorld(pTarget:OBBCenter()) end
+    
+	return vAimPos
+end
+
+function Aim.isVisible(Entity)
+	local pos = GetAimPos(Entity)
+	
+	local trace = { 
+		start = GetEyePos(lply), 
+		endpos = pos, 
+		filter = { lply, Entity }, 
+		mask = MASK_SHOT
+	}
+
+	if( !tblReturn.Hit ) then
+		return true
+	end
+	
+	return false
+end 
+
+function Aim.SortPlayers()
+    local funny, error = pcall( function()
+        local Num = math.huge
+        local Target = nil
+
+        for i = 1, entitylist.GetHighestEntityIndex() do
+            local FatJew = Entity(i)
+            local class = FatJew:GetClass()
+            local IsPlayer = class == "player"
+
+            if IsPlayer then
+                for Bones,Val in pairs(Boning) do
+                    if FatJew:LookupBone(Val) and FatJew:LookupBone(Val) > 0 and FatJew:GetHealth() > 0 then
+                        local Bones  = FatJew:GetBonePosition(FatJew:LookupBone(Val))
+						local GiveMeMoreFpsPls = ToScreen(Bones)
+
+                        if !isPointInCircle(GiveMeMoreFpsPls.x, GiveMeMoreFpsPls.y, cw, hc, Derama.ConfigTable["Aim.Fov.slider"] * 6.5) then continue end
+
+                        local x      = GiveMeMoreFpsPls.x 
+                        local y      = GiveMeMoreFpsPls.y
+                        local Dist   = math.DistanceSqr( ScrW() / 2, ScrH() / 2, x, y)
+
+                        if not exodium.InScreen(FatJew) then continue end
+                        if not FatJew:IsValid() then continue end
+                        if not FatJew:IsAlive() then continue end
+                        if FatJew:IsDormant() == true then continue end
+                        
+                        if Derama.ConfigTable["Aim.Team.combobox"] then
+                            if lply:Team() == FatJew:Team() then continue end
+                        end
+
+                        --if !Aim.isVisible(FatJew) then continue end--make shure hes visible:-)
+
+                        if FatJew == lply then continue end--dont shoot yourself :-)
+
+                        --if FatJew:IsNPC() then continue end--ignore npc's
+
+                       -- if Derama.ConfigTable["Aim.Ignorebot.combobox"] then
+                           -- if FatJew:IsBot() then continue end
+                        --end
+                        /*
+                        if Derama.ConfigTable["Aim.IgnoreAdmins.combobox"] then
+                            if FatJew:IsAdmin() or FatJew:IsSuperAdmin() then continue end
+                        end
+
+                        if Derama.ConfigTable["Aim.car.combobox"] then
+                            if FatJew:InVehicle() then continue end
+                        end
+                        */
+
+                       -- if Derama.ConfigTable["Aim.IgnoreBuild.combobox"] then
+                       --     if FatJew:GetNetworkedVar("_Kyle_Buildmode") == true then continue end
+                        --end
+
+                        --if FatJew:Team() == TEAM_SPECTATOR then return end 
+
+                        if Dist < Num then
+                            Num = Dist
+                            Target = FatJew
+                        end
+                    end
+                end
+            end
+        end
+        return Target
+    end)
+
+    if ( not funny ) then
+	    MsgN( "nig : " .. error )
+    end
+end
+
+local AutoAim = true
+
+function Aim:Aimbot(cmd)
+    if not Derama.ConfigTable["Aim.Aimbot.checkbox"] then return end
+    --if not lply or not lply:Alive() then return end
+    --if lply:GetMoveType() == MOVETYPE_OBSERVER then return end
+
+	local aWep = lply:GetActiveWeapon()
+	if not aWep then return end
+
+    local aWepClass, aWepBase = aWep:GetClass(), GetWeaponBase(aWep)
+	local bCanShoot = CanShoot(aWep, aWepClass, aWepBase)
+	local iAttackEnum = GetAttackType(cmd, aWepClass)
+	local bCanAttack = CanAttack(aWep, iAttackEnum)
+
+	if WepClass == "weapon_crossbow" then
+		-- DO CROSSBOW AIM
+	end
+
+	if not bCanShoot then return end
+
+	if not bCanAttack then
+		cmd:RemoveKey(iAttackEnum)
+		-- it might make sense to return early here.
+		-- if you dont, you may still be "aiming" at the entity, but not firing
+
+		-- return
+	end
+
+	if not bCanAttack then return end
+
+	local bAimKeyDown = input.IsButtonDown(Derama.ConfigTable["Aim.binder"])
+
+	local bFiringThisTick = false
+    local IsAiming = false
+
+    if bAimKeyDown then -- abstract this into multiple functions for clarity, for this example, im going to make a big giant scope pyramid
+        local pTarget = Aim.SortPlayers()  --PlayerCache:GetClosestVisiblePlayer()
+        IsAiming = true 
+		-- TARGET ACQUISITION!
+		-- 1: Find nearest viable player. (closest to our pos, or our crosshair)
+		
+		-- 2: Ensure viable player is visible (THIS IS WHERE IT GETS INTERESTING)
+			-- 	2. a): Discard players naively (simple trace to their world space center from our shoot pos)
+				--PROS: Significantly faster, we are discarding unlikely players early, prioritizing players we are certain are hittable
+				--CONS: We will miss out on viable shots (their world space center is obscured but their head isnt)
+
+			-- 	2. b): Discard players robustly (do not discard any players, consider them all valid until we perform our final shoot check)
+				--PROS: Significantly more ACCURATE. We can hit players obscured behind walls so long as any valid position is available to us
+				--CONS: VERY slow. Since we treat all players as equally viable, we must fetch ALL hitbox data for EVERY entity.
+
+			-- 2. c) Hybrid approach. (Perform naive check, prioritizing visible players first, if no players are visible with naive check, move onto robust check)
+				-- PROS: Best of both worlds.
+				-- CONS: Theres a chance that we iterate all players, perform naive check, sort them, and then come to the 
+					-- conclusion that the only viable player was the one deemed most "unlikely" 
+					-- (We still have to perform both naive checks and robust checks on every viable entity)
+
+		-- 3: SHOOT AT THE FUCKIN GUY
+
+
+		-- FOR NOW:
+		-- we are going with option A. This is not the most "Accurate" but in my experience, it is the best overall.
+		-- Typically, i usually discard players naively and then perform similar naive checks 
+		-- (or even more advanced ones such as multipoint etc) on each of their backtrack records.
+		local AimPos = nil
+		if IsValid(pTarget) then
+            --for k,Boner in pairs(exodium.FunnyBones) do
+			local AimPos = pTarget:GetBonePosition(pTarget:LookUpBone("ValveBiped.Bip01_Head1"))
+            --end
+
+			if AimPos then
+                local AimPosToScreen = ToScreen(AimPos)
+                if Derama.ConfigTable["Aim.Aimbot.fovCircleColor.checkbox"] then
+                    if !isPointInCircle(AimPosToScreen.x, AimPosToScreen.y, cw, hc, Derama.ConfigTable["Aim.Fov.slider"] * 6.5) then return end
+                end
+
+                /*
+
+                if Derama.ConfigTable["Aim.Extrapolation.combobox"] then
+                    AimPos = AimPos - pTarget:GetAbsVelocity() * engine.TickInterval()
+                    --API.UserCmd.SetTick(cmd, API.GetNetVar(LPY, "DT_BaseEntity", "m_flSimulationTime", "Float"))
+                end
+                */
+
+				local Ang = (AimPos - lply:GetEyePos()):Angle()
+                /*
+                if Derama.ConfigTable["Aim.CompMethod.combobox"].Option == "On Aimbot" then
+                    if Derama.ConfigTable["Aim.Nospread.combobox"] then 
+                        Ang = NS:CalculateSpread(cmd, lply:GetActiveWeapon(), Ang)
+                    end 
+
+                    if Derama.ConfigTable["Aim.Recoil.combobox"] then
+                        if not string.StartWith(lply:GetActiveWeapon():GetClass(), "m9k_") then
+                            Ang = Ang - lply:GetViewPunchAngles()
+                        end
+                    end
+                end
+                */
+
+				local bAimed = PerformAim(cmd, Ang)
+                --API.UserCmd.SetWorldClicker(cmd,Ang:Forward())
+				if bAimed and Derama.ConfigTable["Aim.AutoShoot.combobox"] then
+					PerformAttack(cmd, iAttackEnum)
+				end
+                --API.UserCmd.SetTick(cmd, API.GetNetVar(pTarget, "DT_BaseEntity", "m_flSimulationTime", "Float"))
+			end
+		end
+        
+    end
+
+	-- this is your constant nospread (for example, shooting at a wall or something without a target)
+    /*
+    if not bShouldPredict and not bFiringThisTick then
+        local ang = cmd:GetViewAngles() -- angPreCMoveViewAngle -- your angle BEFORE you do anything to it. (basically, set this at the top of your createmove hook)
+
+        if cmd:KeyDown(iAttackEnum) and not bFiringThisTick then
+			-- first force your seed here (if desired)
+			if Derama.ConfigTable["Aim.Seednospread.checkbox"] then
+				API.UserCmd.SetRandomSeed(cmd,Derama.ConfigTable["Aim.SeedAmmount.slider"])
+			end 
+
+            if Derama.ConfigTable["Aim.CompMethod.combobox"].Option == "Allways on" then
+                -- then, calculate your spread (update 'ang')
+                if Derama.ConfigTable["Aim.Nospread.combobox"] then 
+                    ang:Set(NS:CalculateSpread(cmd, lply:GetActiveWeapon(), ang))
+                end 
+
+                    -- next, adjust your recoil
+                if Derama.ConfigTable["Aim.Recoil.combobox"] then
+                    if not string.StartWith(lply:GetActiveWeapon():GetClass(), "m9k_") then
+                        ang:Set(ang - lply:GetViewPunchAngles())
+                    end
+                end
+            end
+
+			-- then, aim at the adjusted spot.
+            PerformAim(cmd, ang)
+			return 
+        end
+    end
+    */
+end
+
+local Visuals = {}
+
+function Visuals.GetBounds(plr)
+    local min, max = plr:GetBoundingBox()
+    
+    local points = {
+        Vector(min.x, min.y, min.z),
+        Vector(min.x, max.y, min.z),
+        Vector(max.x, max.y, min.z),
+        Vector(max.x, min.y, min.z),
+        Vector(max.x, max.y, max.z),
+        Vector(min.x, max.y, max.z),
+        Vector(min.x, min.y, max.z),
+        Vector(max.x, min.y, max.z)
+    }
+    
+    local flb = ToScreen(points[4])
+    local brt = ToScreen(points[6])
+    local blb = ToScreen(points[1])
+    local frt = ToScreen(points[5])
+    local frb = ToScreen(points[3])
+    local brb = ToScreen(points[2])
+    local blt = ToScreen(points[7])
+    local flt = ToScreen(points[8])
+    
+    local arr = { flb, brt, blb, frt, frb, brb, blt, flt }
+    
+    local left = flb.x
+    local top = flb.y
+    local right = flb.x
+    local bottom = flb.y
+    
+    for i=1,8 do
+        if(arr[i]) then
+            if (left > arr[i].x) then
+                left = arr[i].x
+            end
+            if (bottom < arr[i].y) then
+                bottom = arr[i].y
+            end
+            if (right < arr[i].x) then
+                right = arr[i].x
+            end
+            if (top > arr[i].y) then
+                top = arr[i].y
+            end
+        end
+    end
+    
+    local bbox = {x=0,y=0,w=0,h=0}
+ 
+    bbox.x = left
+    bbox.y = top
+    bbox.w = right - left
+    bbox.h = bottom - top
+ 
+    return bbox
+end
+
+function Visuals.PlayerWithinBounds(target, dist )
+	local distSqr = dist * dist
+
+	return Entity(entitylist.GetLocalPlayer()):GetPos():DistToSqr( target:GetPos() ) > distSqr
+end
+
+local Bones = {--The table is from herpes bc im to lazy to make the table
+	{ S = "ValveBiped.Bip01_Head1", E = "ValveBiped.Bip01_Neck1" },
+	{ S = "ValveBiped.Bip01_Neck1", E = "ValveBiped.Bip01_Spine4" },
+	{ S = "ValveBiped.Bip01_Spine4", E = "ValveBiped.Bip01_Spine2" },
+	{ S = "ValveBiped.Bip01_Spine2", E = "ValveBiped.Bip01_Spine1" },
+	{ S = "ValveBiped.Bip01_Spine1", E = "ValveBiped.Bip01_Spine" },
+	{ S = "ValveBiped.Bip01_Spine", E = "ValveBiped.Bip01_Pelvis" },
+	{ S = "ValveBiped.Bip01_Spine2", E = "ValveBiped.Bip01_L_UpperArm" },
+	{ S = "ValveBiped.Bip01_L_UpperArm", E = "ValveBiped.Bip01_L_Forearm" },
+	{ S = "ValveBiped.Bip01_L_Forearm", E = "ValveBiped.Bip01_L_Hand" },
+	{ S = "ValveBiped.Bip01_Spine2", E = "ValveBiped.Bip01_R_UpperArm" },
+	{ S = "ValveBiped.Bip01_R_UpperArm", E = "ValveBiped.Bip01_R_Forearm" },
+	{ S = "ValveBiped.Bip01_R_Forearm", E = "ValveBiped.Bip01_R_Hand" },
+	{ S = "ValveBiped.Bip01_Pelvis", E = "ValveBiped.Bip01_L_Thigh" },
+	{ S = "ValveBiped.Bip01_L_Thigh", E = "ValveBiped.Bip01_L_Calf" },
+	{ S = "ValveBiped.Bip01_L_Calf", E = "ValveBiped.Bip01_L_Foot" },
+	{ S = "ValveBiped.Bip01_Pelvis", E = "ValveBiped.Bip01_R_Thigh" },
+	{ S = "ValveBiped.Bip01_R_Thigh", E = "ValveBiped.Bip01_R_Calf" },
+	{ S = "ValveBiped.Bip01_R_Calf", E = "ValveBiped.Bip01_R_Foot" },
+}
+
+function Visuals.ESPNSHIT()
+    if (!Derama.ConfigTable["Visuals.EnableESP.checkbox"]) then
+		return 
+	end
+    for GetPlayer = 1, entitylist.GetHighestEntityIndex() do
+        local v = Entity(GetPlayer)
+        if GetPlayer == entitylist.GetLocalPlayer() then continue end
+        if not v then continue end
+		local class = v:GetClass()
+		local IsPlayer = class == "player"
+
+        if IsPlayer then
+			if not v:IsAlive() then continue end
+			local GetInfo = engineclient.GetPlayerInfo(GetPlayer)
+			local class = v:GetClass()
+			local IsPlayer = class == "player"
+			if not exodium.InScreen(v) then continue end
+			if Visuals.PlayerWithinBounds( v, Derama.ConfigTable["Visuals.ESPDistance.slider"] ) then continue end
+
+			local box = Visuals.GetBounds(v)
+			local x,y,w,h = box.x,box.y,box.w,box.h
+			w = math.max(w,10)
+			h = math.max(h,10)
+
+
+            if Derama.ConfigTable["Visuals.IgnoreBots.checkbox"] then
+                if GetInfo.IsBot == true then continue end
+            end
+            if Derama.ConfigTable["Visuals.IgnoreTM8.checkbox"] then
+                if lply:GetTeam() == v:GetTeam() then continue end
+            end
+			if Derama.ConfigTable["Visuals.IgnoreBuildmode.checkbox"] then
+				if v:GetNetworkedVar("_Kyle_Buildmode") == true then continue end
+			end
+
+            if v:IsDormant() == true then continue end
+            local box = Visuals.GetBounds(v)
+            local x,y,w,h = box.x,box.y,box.w,box.h
+            w = math.max(w,10)
+            h = math.max(h,10)
+			
+			if Derama.ConfigTable["Visuals.FillBox.checkbox"] then
+				surface.SetDrawColor( Derama.ConfigTable["Visuals.FillBox.colormixer"] )
+				surface.DrawRect(x, y, w, h, 1)
+			end
+			if Derama.ConfigTable["Visuals.Healthbar.checkbox"] then
+				local health = math.Clamp(h * v:GetHealth() / v:GetMaxHealth(), 0 , h )
+				local UCalc  = math.Clamp(y,0,y)
+				local P_Over = x - 4
+
+				surface.SetDrawColor(Color(0,0,0))
+				surface.DrawRect(P_Over, UCalc - 1, 1,h + 2)
+
+				surface.SetDrawColor(Derama.ConfigTable["Visuals.HealthBar.colormixer"])
+				surface.DrawRect(P_Over, UCalc - 1, 1,health + 2)
+
+				surface.SetDrawColor(Color(0,0,0))
+
+				surface.DrawOutlinedRect(P_Over - 1,UCalc - 1,3, h + 2, 1)
+
+			end
+			if Derama.ConfigTable["Visuals.2DBox.checkbox"] then
+				if Derama.ConfigTable["Visuals.BoxType.combobox"].Option == "Outlined" then
+					--Outside Line
+					surface.SetDrawColor(0,0,0)
+					surface.DrawOutlinedRect(x - 1, y - 1, w + 2, h + 2, 1)
+					--Inside Line
+					surface.DrawOutlinedRect(x + 1, y + 1, w - 2, h - 2, 1)
+
+					surface.SetDrawColor( Derama.ConfigTable["Visuals.2DBox.colormixer"] )
+					surface.DrawOutlinedRect(x,y,w,h,1)
+
+				elseif Derama.ConfigTable["Visuals.BoxType.combobox"].Option == "not Outlined :(" then
+					surface.SetDrawColor( Derama.ConfigTable["Visuals.2DBox.colormixer"] )
+					surface.DrawOutlinedRect(x,y,w,h, 1)
+				end
+			end
+            if Derama.ConfigTable["Visuals.Name.checkbox"] then
+               draw.SimpleTextOutlined(GetInfo.name,"x88FontESP",x + w / 2 ,y - 3,Derama.ConfigTable["Visuals.Name.colormixer"],TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM, 0,Color( 0, 0, 0, 255 ))
+            end
+            if Derama.ConfigTable["Visuals.JobESP.checkbox"] then
+                local TeamName = v:GetTeamNumber()
+
+                local y_Pos = y + h
+                --Job
+				if not Derama.ConfigTable["Visuals.WeaponESP.checkbox"] then
+					y_Pos = y + h + 1
+				else
+					y_Pos = y + h + 14
+				end
+
+                draw.SimpleTextOutlined(TeamName,"x88FontESP",x + w / 2 ,y_Pos,Derama.ConfigTable["Visuals.job.colormixer"],TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP, 0,Color( 0, 0, 0, 255 ))
+            end
+            if Derama.ConfigTable["Visuals.WeaponESP.checkbox"] then
+                local GetWeapon = v:GetActiveWeapon()
+				if not IsValid(GetWeapon) then continue end
+                local WepName   = GetWeapon:GetClass()
+
+                draw.SimpleTextOutlined(language.GetPhrase(WepName),"x88FontESP",x + w / 2 ,y + h + 1,Derama.ConfigTable["Visuals.WeaponESP.colormixer"],TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP, 0,Color( 0, 0, 0, 255 ))
+            end
+            if Derama.ConfigTable["Visuals.UserGroupESP.checkbox"] then
+                local Y_Pos_UserGroup = y + h
+                local UserGroupText = nil
+                local UserGroupVar = v:GetNetworkedVar( "UserGroup" )
+				if not Derama.ConfigTable["Visuals.WeaponESP.checkbox"] and not Derama.ConfigTable["Visuals.JobESP.checkbox"] then
+					Y_Pos_UserGroup = y + h + 1
+                end
+				if Derama.ConfigTable["Visuals.WeaponESP.checkbox"] and Derama.ConfigTable["Visuals.JobESP.checkbox"] then
+					Y_Pos_UserGroup = y + h + 27
+				end
+				if not Derama.ConfigTable["Visuals.JobESP.checkbox"] and Derama.ConfigTable["Visuals.WeaponESP.checkbox"] then
+					Y_Pos_UserGroup = y + h + 14
+				end
+				if not Derama.ConfigTable["Visuals.WeaponESP.checkbox"] and Derama.ConfigTable["Visuals.JobESP.checkbox"] then
+					Y_Pos_UserGroup = y + h + 14
+				end
+				if not Derama.ConfigTable["Visuals.WeaponESP.checkbox"] and Derama.ConfigTable["Visuals.JobESP.checkbox"] then
+					Y_Pos_UserGroup = y + h + 14
+				end
+                
+                if UserGroupVar then
+                    UserGroupText = ""
+                end
+
+                draw.SimpleTextOutlined(UserGroupText,"x88FontESP",x + w / 2,Y_Pos_UserGroup,Derama.ConfigTable["Visuals.UserGroup.colormixer"],TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP, 0,Color( 0, 0, 0, 255 ))
+            end
+            if Derama.ConfigTable["Visuals.Line.checkbox"] then 
+				local ca = ToScreen(v:GetPos())
+					if v == lply then continue end
+					if not v:IsAlive() then continue end
+				surface.SetDrawColor(Derama.ConfigTable["Visuals.Line.colormixer"])
+				surface.DrawLine(ScrW() / 2, ScrH(),ca.x,ca.y)
+			end
+            if Derama.ConfigTable["Visuals.Armor.checkbox"] then
+                local PlayerArmour = nil
+
+                if PlayerArmour == 0 then return end
+                local pp_Pos = x - 3
+				if Derama.ConfigTable["Visuals.Healthbar.checkbox"] then
+                    pp_Pos = x - 5
+				else
+                    pp_Pos = x - 2
+				end
+                draw.SimpleTextOutlined(PlayerArmour,"x88FontESP",pp_Pos,y + 12,Derama.ConfigTable["Visuals.Armor.colormixer"],TEXT_ALIGN_RIGHT, TEXT_ALIGN_BOTTOM, 0,Color( 0, 0, 0, 255 ))
+            end
+            if Derama.ConfigTable["Visuals.Skeleton.checkbox"] then 
+                for k,TblBone in pairs(Bones) do
+                    local Start,End = ToScreen(v:GetBonePosition(v:LookupBone(TblBone.S))),ToScreen(v:GetBonePosition(v:LookupBone(TblBone.E)))
+
+                    surface.SetDrawColor(Derama.ConfigTable["Visuals.Skeleton.colormixer"])
+                    surface.DrawLine(Start.x, Start.y, End.x, End.y)
+                end
+            end
+            
+        end
+    end
+end
+
+function Visuals.AspectRatio()
+	RunConsoleCommand("r_aspectratio",Derama.ConfigTable["Visuals.AspectRatio.slider"])
+end
+
+function Visuals.Fullbright()
+    if not Derama.ConfigTable["Visuals.FullBright.combobox"] then 
+        return RunConsoleCommand("mat_fullbright", 0) 
+    end
+    RunConsoleCommand("mat_fullbright", 1)
+end
+
+function Visuals.WorldModulation()
+
+    if (!Derama.ConfigTable["Visuals.WorldModulation.combobox"]) then
+	    for k, v in pairs( GetMat ) do
+   		    Material( v ):SetVector( "$color", Vector(255,255,255) * (1 / 255) )
+   		    Material( v ):SetFloat( "$alpha", 255 * (1 / 255) )
+	     end
+       return
+    end
+    local col6 = Derama.ConfigTable["Visuals.World.ColorModulation.colormixer"]
+	for k, v in pairs( GetMat ) do
+   		Material( v ):SetVector( "$color", Vector(col6.r, col6.g, col6.b ) * (1 / 255) )
+   		Material( v ):SetFloat( "$alpha", col6.a * (1 / 255) )
+	end
+end
+
+local Movement = {}
+
+function Movement.AutoJump(cmd)
+	if not Derama.ConfigTable["Movement.movement.autojump"]then return end
+
+	if input.IsButtonDown( KEY_SPACE ) then-- then && !User:IsOnGround()
+		cmd:RemoveKey(IN_JUMP)
+	end
+end
+
+local Sound = {}
+--engineclient.GetPlayerInfo(1).userid
+
+function Visuals.HitSoundsAndKillSounds(data)
+	if (!Derama.ConfigTable["Visuals.HitSounds.CheckBox"]) then
+		return
+	end
+	local attacker, health, id, victim = data.attacker, data.health, data.userid, Entity(data.userid)
+    if victim == engineclient.GetPlayerInfo(GetlplyNum).userid then return end
+    if attacker == engineclient.GetPlayerInfo(GetlplyNum).userid then
+        local HitSound = HitnKill[Derama.ConfigTable["Visuals.HitSounds.combobox"].Option]
+        surface.PlaySound(HitSound)
+        exodium.Notifications("Damaged "..victim:Name(),Color(140,0,200))
+    end
+    if attacker == engineclient.GetPlayerInfo(GetlplyNum).userid and health <= 0 then
+        local KillSound = HitnKill[Derama.ConfigTable["Visuals.KillSounds.combobox"].Option ]
+        surface.PlaySound(KillSound)
+        exodium.Notifications("Killed "..victim:Name(),Color(140,255,200))
+    end
+end
+
+local Misc = {}
+
+function Misc.Retard()
+    if not Derama.ConfigTable["Aim.WaterMark.checkbox"] then return end
+
+    local gradientMat = Material("vgui/gradient_up", "noclamp smooth")
+    local Ping = netchannel:GetLatency( 0 ) + netchannel:GetLatency( 1 )
+    local text = "Exodium | "..engineclient.GetPlayerInfo(GetlplyNum).name.. " | ".. "Ping: "..math.ceil( Ping * 1000 ).. " | " .. "Version: ".."V3"
+    surface.SetFont("NotificationsFont")
+    local width, height = surface.GetTextSize( text )
+    width = width + 18
+    local Center = cw - (width / 2)
+    local Height = hc - (hc)
+
+    surface.SetDrawColor(Derama.ConfigTable["Misc.MenuTransparency.colormixer"])
+    surface.DrawRect( Center, Height, width, 35)
+
+    surface.SetDrawColor(Color(15,15,15,255))
+    surface.SetMaterial(gradientMat)
+    surface.DrawTexturedRect(Center , Height, width, 35)
+
+    surface.SetDrawColor(Derama.ConfigTable["Misc.TitleBarsAndButtons.colormixer"])
+    surface.DrawRect( Center, Height, width, 3)
+
+    --surface.SetDrawColor(Derama.ConfigTable["Misc.OutlINES.colormixer"])
+    --surface.DrawLine( Center, Height, width, Height)
+
+    --outline
+    surface.SetDrawColor(Derama.ConfigTable["Misc.OutlINES.colormixer"])
+    surface.DrawOutlinedRect(Center, Height, width, 35)
+
+    surface.SetTextColor(Derama.ConfigTable["Misc.MenuText.colormixer"])
+    surface.SetTextPos(Center + 10, Height + 11)
+    surface.DrawText(text)
+end
+
+--functions to organize the calls
+function exodium:Rendering()
+    Nots()
+    if engineclient.IsTakingScreenshot() == true then
+        Notifications("screengrab called on the client!", Color(217,227,42), true)
+        return
+    end
+    Misc.Retard()
+	Visuals.AspectRatio()
+	Visuals.Fullbright()
+    Aim.AimbotFov()
+    engineclient.GetWorldToScreenMatrix()
+    Visuals.ESPNSHIT()
+end
+
+function exodium:InGameFuncs() 
+    if ( IsInGame() ) then
+        exodium:Rendering()
+    end
+end
+
+local function InitializeHooks() -- Don't be creating multiple hooks with the same events
+	Util.AddHook("DrawOverlay", function()
+        exodium:InGameFuncs() 
+		Menu.Toggle()
+		Util.UpdateButtons()
+        --Visuals.WorldModulation()
+        if not GetlplyNum == false then 
+            lply = Entity(GetlplyNum)
+        end
+	end)
+    --Util.AddHook("player_hurt", function(data)
+        --Visuals.HitSoundsAndKillSounds(data)
+    --end)
+	Util.AddHook("ClientModeOverrideView", function(origin, angles, fov)
+        if engineclient.IsTakingScreenshot() == true then
+            Notifications("screengrab called on the client!", Color(217,227,42), true)
+            return
+        end
+		if Derama.ConfigTable["Visuals.EnableFOV.combobox"] then
+		    fov = Derama.ConfigTable["Visuals.PlayeFOV.slider"]
+	    end
+
+	    return origin, angles, fov
+	end)
+    
+	/*
+	Util.AddHook("ClientModeCreateMove", function(cmd)
+    	local funny, error = pcall( function()
+            
+            for i = 1, entitylist.GetHighestEntityIndex() do
+                print(Aim.SortPlayers())
+                local player = Entity(i)
+                local class = player:GetClass()
+                local IsPlayer = class == "player"
+
+                if IsPlayer then
+
+                    local Ang = player:GetPos()
+                    local SetAng = (Ang - lply:GetEyePos()):Angle()
+
+			        cmd:SetViewAngles(SetAng)
+
+                end
+            end
+			--Aim:Aimbot(cmd)
+		end)
+
+		if ( not funny ) then
+			MsgN( "ClientModeCreateMove : " .. error )
+		end
+	end)
+	*/
+    
+end
+
+InitializeHooks()
+
+Notifications("Exodium loaded", Color(211,0,0), false)

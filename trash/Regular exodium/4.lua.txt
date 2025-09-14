@@ -1,0 +1,5343 @@
+--[[
+ !!! Leave this here as a reminder !!!
+ Don't give this out to anyone, keep this private to yourself as a personal project.
+ If anything have them talk to me about getting the base.
+ Thank You! - ASTEYA
+
+ dont even think derama is private anymore but im leaving the message there!
+
+Useful websites
+https:--chatgpt.com/
+https:--wiki.facepunch.com/gmod/
+credits (RANKED IN DESCENDING ORDER):
+s0lum (worlds smartest and most handsome glua prophet polyglot and overall genius)
+
+god
+allah
+buddha
+christ (the messiah)
+various other figures of religion
+
+leonardo (davinci followed shortly by dicaprio)
+
+
+george michaels from wham!
+
+
+
+
+
+soulja boy (young draco)
+
+
+literally everyone else
+
+
+
+
+Kennedy poopson(aimbot fov)
+asteya(for the menu base and teaching me some stuff bout the menu base )
+anane(used his cheat for some stuff)
+asriel(API,Making the cheat UD)
+Silver surfer(Dcomboboxes)
+
+sentient worms
+regular worms
+
+various beetles and other insects
+
+paradox
+
+if you somehow got this cheat and your not don fent dealer aka lebron james69 then dude mind your own bussiness!
+this cheat was made lebron james69 aka dont fent dealer its been in development since 8/10/2024. The project exodium was started for pure fun when someone called shiba was showcasing there
+Cool HUD so i decided to make my own. First it was a simple hud cheat whit admin esp and fov and some cool features then it expanded to exodiumv2 that had a hud whit box only no features
+after that someone Named asteya gave lebron james69 aka don fent dealer a menu base. Whit that menu base i decided to continue the development of exodium :-) .
+
+
+COOOOLL FUCKING ADDDDON
+
+https:--steamcommunity.com/sharedfiles/filedetails/?id=2718627610&searchtext=Customizable+Hit+Indicators
+]]
+
+local LPLY = API.Protected_G.LocalPlayer()
+local FreeCamAng = Angle()
+local EyeAng = LPLY:EyeAngles()
+local RealAngle = Angle(EyeAng)
+local FakeAngle = Angle(EyeAng)
+local sv_skyname = API.GetConVar("sv_skyname")
+local cl_forwardspeed = API.GetConVar("cl_forwardspeed")
+local cl_sidespeed = API.GetConVar("cl_sidespeed")
+local arccw_desync = API.GetConVar("arccw_desync")
+local cw = ScrW() / 2
+local hc = ScrH() / 2
+local SendPacket = true
+local IsThirdPerson = false
+local ChokePackets = 0
+local LP_FAKE = -1
+local LP_REAL = 0
+local TICK_INTERVAL = engine.TickInterval()
+local TICK_COUNT    = engine.TickCount()
+local Gradient = Material("vgui/gradient_down")
+local gradientMat = Material("vgui/gradient_down", "noclamp smooth")
+local gradientMatUp = Material("vgui/gradient_up", "noclamp smooth")
+local OutlinedCol = Color(0, 0, 0)
+
+local C_UserCmd = API.Protected_R.CUserCmd
+local R_Player = API.Protected_R.Player
+local C_UserCmdCopy = table.Copy(C_UserCmd)
+
+--pls keep me ud :-) ofc we are still calling global functions but fuckkkk it dudeeeee
+local OriginalToScreen = API.Detours.GetOriginalFunction("Vector", "ToScreen")
+
+--entity boogers
+local OriginalCollisionB = API.Detours.GetOriginalFunction("Entity", "GetCollisionBounds")
+local OriginalGetPos = API.Detours.GetOriginalFunction("Entity", "GetPos")
+
+--some player stuff
+local Get_ViewPunc = API.Detours.GetOriginalFunction("Player", "GetViewPunchAngles")
+local OriginalTeamIndex = API.Detours.GetOriginalFunction("Player", "Team")
+
+--render functions
+local Draw_Beam = API.Detours.GetOriginalFunction("render","DrawBeam")
+local Render_SetMaterial = API.Detours.GetOriginalFunction("render","SetMaterial")
+local Render_SetColorMaterial = API.Detours.GetOriginalFunction("render","SetColorMaterial")
+local Render_DrawBox = API.Detours.GetOriginalFunction("render","DrawBox")
+local Render_SetMaterial = API.Detours.GetOriginalFunction("render","SetMaterial")
+local Render_SetColorModulation = API.Detours.GetOriginalFunction("render", "SetColorModulation")
+local Render_MaterialOverride = API.Detours.GetOriginalFunction("render", "MaterialOverride")
+local Render_SuppressEngineLighting = API.Detours.GetOriginalFunction("render", "SuppressEngineLighting")
+local Render_SetRenderTarget = API.Detours.GetOriginalFunction("render", "SetRenderTarget")
+local Render_SetBlend = API.Detours.GetOriginalFunction("render", "SetBlend")
+
+--cusercmd functions
+local OriginalAddKey = API.Detours.GetOriginalFunction("CUserCmd", "AddKey")
+local OriginalRemoveKey = API.Detours.GetOriginalFunction("CUserCmd", "RemoveKey")
+local CUserCmd_CommandNumber = API.Detours.GetOriginalFunction("CUserCmd", "CommandNumber")
+local OriginalSetViewAngles = API.Detours.GetOriginalFunction("CUserCmd", "SetViewAngles")
+local CUserCmd_KeyDown = API.Detours.GetOriginalFunction("CUserCmd", "KeyDown")
+local CUserCmd_GetSideMove = API.Detours.GetOriginalFunction("CUserCmd", "GetSideMove")
+local CUserCmd_GetForwardMove = API.Detours.GetOriginalFunction("CUserCmd", "GetForwardMove")
+local CustomSetUpMove = API.Detours.GetOriginalFunction("CUserCmd", "SetUpMove")
+local CUserCmd_GetViewAngles = API.Detours.GetOriginalFunction("CUserCmd", "GetViewAngles")
+local CUserCmd_SetSideMove = API.Detours.GetOriginalFunction("CUserCmd", "SetSideMove")
+local CUserCmd_SetForwardMove = API.Detours.GetOriginalFunction("CUserCmd", "SetForwardMove")
+local CUserCmd_GetUpMove = API.Detours.GetOriginalFunction("CUserCmd", "GetUpMove")
+local CUserCmd_SetImpulse = API.Detours.GetOriginalFunction("CUserCmd", "SetImpulse")
+local CUserCmd_GetMouseX = API.Detours.GetOriginalFunction("CUserCmd", "GetMouseX")
+local CUserCmd_SetButtons = API.Detours.GetOriginalFunction("CUserCmd", "SetButtons")
+local CUserCmd_GetButtons = API.Detours.GetOriginalFunction("CUserCmd", "GetButtons")
+local CUserCmd_TickCount = API.Detours.GetOriginalFunction("CUserCmd", "TickCount")
+
+--cam funcs
+local cam_Start = API.Detours.GetOriginalFunction("cam", "Start")
+local cam_End3D = API.Detours.GetOriginalFunction("cam", "End3D")
+local cam_End2D = API.Detours.GetOriginalFunction("cam", "End2D")
+local cam_IgnoreZ = API.Detours.GetOriginalFunction("cam","IgnoreZ")
+
+--surface functions
+local Surface_DrawTexturedRect = API.Detours.GetOriginalFunction("surface", "DrawTexturedRect")
+local Surface_DrawOutlinedRect = API.Detours.GetOriginalFunction("surface", "DrawOutlinedRect")
+local DrawText = API.Detours.GetOriginalFunction("surface", "DrawText")
+local Draw_Rect = API.Detours.GetOriginalFunction("surface", "DrawRect")
+local Surface_SetDrawCol = API.Detours.GetOriginalFunction("surface", "SetDrawColor")
+local Surface_DrawLine = API.Detours.GetOriginalFunction("surface", "DrawLine")
+local Surface_TextCol = API.Detours.GetOriginalFunction("surface", "SetTextColor")
+local Surface_TextPos = API.Detours.GetOriginalFunction("surface", "SetTextPos")
+local Surface_SetMat = API.Detours.GetOriginalFunction("surface", "SetMaterial")
+local OriginalSurfaceGetSize = API.Detours.GetOriginalFunction("surface", "GetTextSize")
+local OriginalSurface_SetFont = API.Detours.GetOriginalFunction("surface", "SetFont")
+local OriginalSurface_PlaySound = API.Detours.GetOriginalFunction("surface", "PlaySound")
+local OriginalCreateFont = API.Detours.GetOriginalFunction("surface", "CreateFont")
+
+--lil bit of extras
+
+local FakeAnglePos = LPLY:GetPos()
+local FakeDuck
+local Yaw
+local Pitch
+--tables
+local GUI = {}
+local exodium = {}
+local Visuals = {}
+local Rage = {}
+local Camera = {}
+local Aim = { Pos = {} }
+
+local Misc = {}
+local Movement = {}
+local IGNWP = {
+	["gmod_toolgun"] = true,
+	["gmod_tool"] = true,
+	["weapon_physgun"] = true,
+	["weapon_physcannon"] = true,
+	["gmod_camera"] = true,
+	["weapon_fists"] = true,
+	["itemstore_pickup"] = true,
+	["keys"] = true,
+	["weapon_phone"] = true
+}
+
+local MOVIgnore = {
+	[MOVETYPE_LADDER] = true,
+	[MOVETYPE_NOCLIP] = true,
+	[MOVETYPE_OBSERVER] = true
+}
+
+local CustomMats = {
+	["flat"] = {
+		-- from s0lum
+		imat = CreateMaterial("flat_occ " .. tostring(API.Protected_G.math.random(-10000, 10000)), "UnlitGeneric", {
+			["$additive"] = "1",
+			["$ignorez"] = 0,
+			["$basetexture"] = "vgui/white_additive",
+			["$bumpmap"] = "vgui/white_additive",
+			["$selfillum"] = "1",
+			["$selfIllumFresnel"] = "1",
+			["$selfIllumFresnelMinMaxExp"] = "[0 0.18 0.6]",
+			["$selfillumtint"] = "[0 0 0]"
+		}),
+		vmat = CreateMaterial("flat_vis " .. tostring(API.Protected_G.math.random(-10000, 10000)), "UnlitGeneric", {
+			["$additive"] = "0",
+			["$ignorez"] = 0,
+			["$basetexture"] = "vgui/white_additive",
+			["$bumpmap"] = "vgui/white_additive",
+			["$selfillum"] = "1",
+			["$selfIllumFresnel"] = "1",
+			["$selfIllumFresnelMinMaxExp"] = "[0 0.18 0.6]",
+			["$selfillumtint"] = "[0 0 0]"
+		})
+	},
+	["metallic"] = {
+		imat = CreateMaterial("metallic_occ " .. tostring(API.Protected_G.math.random(-10000, 10000)), "VertexLitGeneric", {
+			["$basetexture"] = "vgui/white_additive",
+			["$envmap"] = "env_cubemap",
+			["$normalmapalphaenvmapmask"] = 1,
+			["$envmapcontrast"] = 1,
+			["$nofog"] = 1,
+			["$model"] = 1,
+			["$nocull"] = 0,
+			["$selfillum"] = 1,
+			["$halflambert"] = 1,
+			["$znearer"] = 0,
+			["$flat"] = 1,
+			["$ignorez"] = 1,
+		}),
+		vmat = CreateMaterial("metallic_vis " .. tostring(API.Protected_G.math.random(-10000, 10000)), "VertexLitGeneric", {
+			["$basetexture"] = "vgui/white_additive",
+			["$envmap"] = "env_cubemap",
+			["$normalmapalphaenvmapmask"] = 1,
+			["$envmapcontrast"] = 1,
+			["$nofog"] = 1,
+			["$model"] = 1,
+			["$nocull"] = 0,
+			["$selfillum"] = 1,
+			["$halflambert"] = 1,
+			["$znearer"] = 0,
+			["$flat"] = 1,
+			["$ignorez"] = 0,
+		})
+	},
+	["glow"] = {
+		imat = CreateMaterial("glow_occ " .. tostring(API.Protected_G.math.random(-10000, 10000)), "VertexLitGeneric", {
+			["$basetexture"] = "vgui/white_additive",
+			["$bumpmap"] = "vgui/white_additive",
+			["$model"] = "1",
+			["$nocull"] = "1",
+			["$nodecal"] = "1",
+			["$additive"] = "1",
+			["$selfillum"] = 1,
+			["$selfIllumFresnel"] = 1,
+			["$selfIllumFresnelMinMaxExp"] = "[0.0 0.3 0.6]",
+			["$selfillumtint"] = "[0 0 0]",
+		}),
+		vmat = CreateMaterial("glow_vis " .. tostring(API.Protected_G.math.random(-10000, 10000)), "VertexLitGeneric", {
+			["$basetexture"] = "vgui/white_additive",
+			["$bumpmap"] = "vgui/white_additive",
+			["$model"] = "1",
+			["$nocull"] = "0",
+			["$selfillum"] = 1,
+			["$selfIllumFresnel"] = 1,
+			["$selfIllumFresnelMinMaxExp"] = "[0.0 0.3 0.6]",
+			["$selfillumtint"] = "[0 0 0]",
+		})
+	},
+	["glowframe"] = {
+		vmat = CreateMaterial("glowframe_vis " .. tostring(API.Protected_G.math.random(-10000, 10000)), "VertexLitGeneric", {
+			["$basetexture"] = "vgui/white_additive",
+			["$nocull"] = 1,
+			["$wireframe"] = 1,
+			["$additive"] = 1,
+			["$envmap"] = "vgui/white_additive",
+			["$envmaptint"] = "[1 1 1]",
+			["$envmapfresnel"] = 1,
+			["$phong"] = 1,
+			["$envmapfresnelminmaxexp"] = "[0 2 4]",
+			["$envmapanisotropy"] = 1,
+			["$envmapanisotropyscale"] = 5,
+			["$alpha"] = 1,
+		}),
+		imat = CreateMaterial("glowframe_occ " .. tostring(API.Protected_G.math.random(-10000, 10000)), "VertexLitGeneric", {
+			["$basetexture"] = "vgui/white_additive",
+			["$nocull"] = 1,
+			["$wireframe"] = 1,
+			["$additive"] = 1,
+			["$envmap"] = "vgui/white_additive",
+			["$envmaptint"] = "[1 1 1]",
+			["$envmapfresnel"] = 1,
+			["$phong"] = 1,
+			["$envmapfresnelminmaxexp"] = "[0 2 4]",
+			["$envmapanisotropy"] = 1,
+			["$envmapanisotropyscale"] = 5,
+			["$ignorez"] = 1,
+			["$alpha"] = 1,
+		}),
+	},
+	["fireframe"] = {
+		vmat = CreateMaterial("fireframe_vis " .. tostring(API.Protected_G.math.random(-10000, 10000)), "VertexLitGeneric", {
+			["$nocull"] = 1,
+			["$wireframe"] = 1,
+			["$basetexture"] = "vgui/white_additive",
+			["$detail"] = "effects/tiledfire/firelayeredslowtiled512",
+			["$detailscale"] = 1,
+			["$detailblendmode"] = 0,
+			["$detailblendfactor"] = 4,
+			["$color2"] = "[7 7 7]",
+			["$selfillum"] = 1,
+			["$selfIllumFresnel"] = 1,
+			["$selfIllumFresnelMinMaxExp"] = "[0 .18 .1]", --[0 .18 .1]
+			["$selfillumtint"] = "[.1 .1 .1]",
+			["$alpha"] = .2,
+			["Proxies"] = {
+				["AnimatedTexture"] = {
+					["animatedtexturevar"] = "$detail",
+					["animatedtextureframenumvar"] = "$detailframe",
+					["animatedtextureframerate"] = 60,
+				},
+			},
+		}),
+		imat = CreateMaterial("fireframe_occ " .. tostring(API.Protected_G.math.random(-10000, 10000)), "VertexLitGeneric", {
+			["$nocull"] = 1,
+			["$wireframe"] = 1,
+			["$basetexture"] = "vgui/white_additive",
+			["$detail"] = "effects/tiledfire/firelayeredslowtiled512",
+			["$detailscale"] = 1,
+			["$detailblendmode"] = 0,
+			["$detailblendfactor"] = 4,
+			["$color2"] = "[7 7 7]",
+			["$selfillum"] = 1,
+			["$selfIllumFresnel"] = 1,
+			["$selfIllumFresnelMinMaxExp"] = "[0 .18 .1]", --[0 .18 .1]
+			["$selfillumtint"] = "[.1 .1 .1]",
+			["$alpha"] = .2,
+			["$ignorez"] = 1,
+			["Proxies"] = {
+				["AnimatedTexture"] = {
+					["animatedtexturevar"] = "$detail",
+					["animatedtextureframenumvar"] = "$detailframe",
+					["animatedtextureframerate"] = 60,
+				},
+			},
+		}),
+	},
+	["CodFrame"] = {
+		-- from s0lum tweaked by lebron james
+		vmat = CreateMaterial("Codframe_vis" .. tostring(API.Protected_G.math.random(-10000, 10000)), "VertexLitGeneric", {
+			--Codframe_vis
+			["$basetexture"] = "models/props_combine/stasisfield_beam", --vgui/achievements/glow : )
+			["$model"] = 5,
+			["$additive"] = 11,
+			["$ignorez"] = 0,
+			["$nocull"] = 10,
+			["$wireframe"] = 1,
+			Proxies = {
+				TextureScroll = {
+					texturescrollvar = "$basetexturetransform",
+					texturescrollrate = 0.2,
+					texturescrollangle = 90,
+				}
+			}
+		}),
+		imat = CreateMaterial("Codframe_occ " .. tostring(API.Protected_G.math.random(-10000, 10000)), "VertexLitGeneric", {
+			["$basetexture"] = "models/props_combine/portalball001_sheet", --vgui/achievements/glow : )
+			["$model"] = 1,
+			["$additive"] = 1,
+			["$ignorez"] = 1,
+			["$nocull"] = 0,
+			["$wireframe"] = 1,
+			Proxies = {
+				TextureScroll = {
+					texturescrollvar = "$basetexturetransform",
+					texturescrollrate = 0.5,
+					texturescrollangle = 90,
+				}
+			}
+		}),
+	},
+	["Darkmatter"] = {
+		-- from s0lum tweaked by lebron james
+		vmat = CreateMaterial("darkmatter_vis" .. "g_refract", "VertexLitGeneric", {
+			--Codframe_vis
+			["$basetexture"] = "models/shiny",
+			["$model"] = 0,
+			["$additive"] = 0,
+			["$ignorez"] = 10,
+			["$reflectivity"] = 11,
+			["$nocull"] = 1,
+			["$wireframe"] = 0,
+			["$receiveflashlight"] = 0,
+			["$reflectivity"] = "[.5 .5 .5]",
+			["$ambientocclusion"] = 1,
+			["MATERIAL_VAR_NO_DEBUG_OVERRIDE"] = 1,
+			Proxies = {
+				TextureScroll = {
+					texturescrollvar = "$basetexturetransform",
+					texturescrollrate = 0.2,
+					texturescrollangle = 140,
+				}
+			}
+		}),
+	},
+	["glowframe"] = {
+		-- from s0lum
+		vmat = CreateMaterial("glowframe_vis" .. tostring(API.Protected_G.math.random(-10000, 10000)), "VertexLitGeneric", {
+			["$basetexture"] = "models/props_combine/portalball001_sheet", --vgui/achievements/glow : )
+			["$model"] = 1,
+			["$additive"] = 1,
+			["$ignorez"] = 1,
+			["$nocull"] = 0,
+			["$wireframe"] = 1,
+			Proxies = {
+				TextureScroll = {
+					texturescrollvar = "$basetexturetransform",
+					texturescrollrate = 0.5,
+					texturescrollangle = 90,
+				}
+			}
+		}),
+		imat = CreateMaterial("glowframe_occ " .. tostring(API.Protected_G.math.random(-10000, 10000)), "VertexLitGeneric", {
+			["$basetexture"] = "models/props_combine/portalball001_sheet", --vgui/achievements/glow : )
+			["$model"] = 1,
+			["$additive"] = 1,
+			["$ignorez"] = 1,
+			["$nocull"] = 0,
+			["$wireframe"] = 1,
+			Proxies = {
+				TextureScroll = {
+					texturescrollvar = "$basetexturetransform",
+					texturescrollrate = 0.5,
+					texturescrollangle = 90,
+				}
+			}
+		}),
+	},
+	["islandwater"] = {
+		vmat = CreateMaterial("islandwater_vis " .. tostring(API.Protected_G.math.random(-10000, 10000)), "VertexLitGeneric", {
+			["$basetexture"] = "water/island_water01_normal",
+			["$model"] = 1,
+			["$additive"] = 1,
+			["$nocull"] = 1,
+			["$alpha"] = 1,
+			["Proxies"] = {
+				["TextureScroll"] = {
+					["texturescrollvar"] = "$basetexturetransform",
+					["texturescrollrate"] = 1,
+					["texturescrollangle"] = API.Protected_G.math.abs(API.Protected_G.math.sin(CurTime() * 25) * 360),
+				},
+			},
+		}),
+		imat = CreateMaterial("islandwater_occ " .. tostring(API.Protected_G.math.random(-10000, 10000)), "VertexLitGeneric", {
+			["$basetexture"] = "water/island_water01_normal",
+			["$model"] = 1,
+			["$additive"] = 1,
+			["$nocull"] = 1,
+			["$alpha"] = 1,
+			["Proxies"] = {
+				["TextureScroll"] = {
+					["texturescrollvar"] = "$basetexturetransform",
+					["texturescrollrate"] = 1,
+					["texturescrollangle"] = API.Protected_G.math.abs(API.Protected_G.math.sin(CurTime() * 25) * 360),
+				},
+			},
+			["$ignorez"] = 1,
+		}),
+	},
+	["wireframe"] = {
+		imat = CreateMaterial("wireframe_occ " .. tostring(math.random(-10000, 10000)), "", {
+			["$ignorez"] = 1
+		}),
+		vmat = CreateMaterial("wireframe_vis " .. tostring(math.random(-10000, 10000)), "", {})
+	},
+	["islandframe"] = {
+		vmat = CreateMaterial("islandframe_vis " .. tostring(API.Protected_G.math.random(-10000, 10000)), "VertexLitGeneric", {
+			["$wireframe"] = 1,
+			["$basetexture"] = "water/island_water01_normal",
+			["$model"] = 1,
+			["$additive"] = 1,
+			["$nocull"] = 1,
+			["$alpha"] = 1,
+			["Proxies"] = {
+				["TextureScroll"] = {
+					["texturescrollvar"] = "$basetexturetransform",
+					["texturescrollrate"] = 1,
+					["texturescrollangle"] = API.Protected_G.math.abs(API.Protected_G.math.sin(CurTime() * 25) * 360),
+				},
+			},
+		}),
+		imat = CreateMaterial("islandframe_occ " .. tostring(API.Protected_G.math.random(-10000, 10000)), "VertexLitGeneric", {
+			["$wireframe"] = 1,
+			["$basetexture"] = "water/island_water01_normal",
+			["$model"] = 1,
+			["$additive"] = 1,
+			["$nocull"] = 1,
+			["$alpha"] = 1,
+			["Proxies"] = {
+				["TextureScroll"] = {
+					["texturescrollvar"] = "$basetexturetransform",
+					["texturescrollrate"] = 1,
+					["texturescrollangle"] = API.Protected_G.math.abs(API.Protected_G.math.sin(CurTime() * 25) * 360),
+				},
+			},
+			["$ignorez"] = 1,
+		}),
+	}
+}
+
+--kennedy's x88 font :-)
+OriginalCreateFont("x88Font", {
+	font = "Tahoma",
+	size = 17,
+	weight = 750,
+	outline = true,
+	antialias = false
+})
+
+OriginalCreateFont("BetterDermaDefault", {
+	font = "BetterDermaDefault",
+	size = 13,
+	weight = 400,
+	outline = false,
+	antialias = false
+})
+
+OriginalCreateFont("x88FontESP", {
+	font = "Arial",
+	size = 14,
+	weight = 500,
+	outline = true,
+	antialias = false
+})
+
+OriginalCreateFont("NotificationsFont", {
+	font = "Tahoma",
+	size = 14,
+	weight = 550,
+	outline = true,
+	antialias = false
+})
+
+local function DrawCustomRect(Col, x, y, width, height)
+	Surface_SetDrawCol(Col)
+	Draw_Rect(x, y, width, height)
+end
+
+local function DrawCustomLine(Col,x,y,endX,endY)
+	Surface_SetDrawCol(Col)
+    Surface_DrawLine(x,y,endX,endY)
+end
+
+local function DrawTexturedRect(Mat, Col, x, y, width, height)
+	Surface_SetMat(Mat)
+	Surface_SetDrawCol(Col)
+	Surface_DrawTexturedRect(x, y, width, height)
+end
+
+local function DrawCustomOutlinedRect(Col, x, y, width, height)
+	Surface_SetDrawCol(Col)
+	Surface_DrawOutlinedRect(x, y, width, height)
+end
+
+local function DrawCustomText(Col, x, y, txt, font)
+	Surface_TextCol(Col)
+	Surface_TextPos(x, y)
+	OriginalSurface_SetFont(font or "x88Font")
+	DrawText(txt)
+end
+
+function exodium.GetControlTable(classname)
+	return PanelFactory[classname]
+end
+
+function exodium.Clamp(_in, low, high)
+	return API.Protected_G.math.min(API.Protected_G.math.max(_in, low), high)
+end
+
+function exodium.Truncate(num, idp)
+	local mult = 10 ^ (idp or 0)
+	return (num < 0 and API.Protected_G.math.ceil or API.Protected_G.math.floor)(num * mult) / mult
+end
+
+function exodium.Rand(low, high)
+	return low + (high - low) * API.Protected_G.math.random()
+end
+
+function exodium.InCirc(x)
+	return 1 - API.Protected_G.math.sqrt(1 - (x ^ 2))
+end
+
+local TeamInfo = {}
+
+function exodium.OutQuint(x)
+	return 1 - ((1 - x) ^ 5)
+end
+
+function exodium.StripExtension(path)
+	for i = #path, 1, -1 do
+		local c = string.sub(path, i, i)
+		if c == "/" or c == "\\" then return path end
+		if c == "." then return string.sub(path, 1, i - 1) end
+	end
+	return path
+end
+
+function exodium.Empty(tab)
+	for k, v in pairs(tab) do
+		tab[k] = nil
+	end
+end
+
+function exodium:RawGet(tbl,funcstring)
+    return API.Protected_G.rawget(tbl,funcstring)
+end
+
+function exodium.Lerp(delta, from, to)
+	if delta > 1 then return to end
+	if delta < 0 then return from end
+	return from + (to - from) * delta
+end
+
+function exodium.DistanceSqr(x1, y1, x2, y2)
+	local xd = x2 - x1
+	local yd = y2 - y1
+	return xd * xd + yd * yd
+end
+
+function exodium.NormalizeAngle(a)
+	return (a + 180) % 360 - 180
+end
+
+function exodium.Clamp(_in, low, high)
+	return API.Protected_G.math.min(API.Protected_G.math.max(_in, low), high)
+end
+
+function exodium.AngleDifference(a, b)
+	local diff = exodium.NormalizeAngle(a - b)
+	if diff < 180 then return diff end
+	return diff - 360
+end
+
+function exodium:ToVector()
+	return Vector(self.r / 255, self.g / 255, self.b / 255)
+end
+
+function exodium.IsValid(object)
+	if not object then return false end
+	local isvalid = object.IsValid
+	if not isvalid then return false end
+	return isvalid(object)
+end
+
+function exodium:RunCommand(command,thing)
+	return API.Protected_G.RunConsoleCommand(command,thing)
+end
+
+function exodium:ButtonDown(Key)
+	return API.Protected_G.input.IsButtonDown(Key)
+end
+
+function exodium.Explode(separator, str, withpattern)
+	if separator == "" then return totable(str) end
+	if withpattern == nil then withpattern = false end
+	local ret = {}
+	local current_pos = 1
+	for i = 1, string.len(str) do
+		local start_pos, end_pos = string.find(str, separator, current_pos, not withpattern)
+		if not start_pos then break end
+		ret[i] = string.sub(str, current_pos, start_pos - 1)
+		current_pos = end_pos + 1
+	end
+
+	ret[#ret + 1] = string.sub(str, current_pos)
+	return ret
+end
+
+function exodium.Replace(str, tofind, toreplace)
+	local tbl = exodium.Explode(tofind, str)
+	if tbl[1] then return table.concat(tbl, toreplace) end
+	return str
+end
+
+function exodium:Start3D( pos, ang, fov, x, y, w, h, znear, zfar )
+	local tab = {}
+
+	tab.type = "3D"
+	tab.origin = pos
+	tab.angles = ang
+
+	if ( fov != nil ) then tab.fov = fov end
+	if ( x != nil && y != nil && w != nil && h != nil ) then
+		tab.x			= x
+		tab.y			= y
+		tab.w			= w
+		tab.h			= h
+		tab.aspect		= ( w / h )
+	end
+
+	if ( znear != nil && zfar != nil ) then
+		tab.znear	= znear
+		tab.zfar	= zfar
+	end
+
+	return cam_Start( tab )
+end
+
+local Cam2D = { type = "2D" }
+
+function exodium:Start2D()
+	return cam_Start( Cam2D )
+end
+
+local User = nil
+local ConfigFolder = "Exodium"
+local ConfigFileExtension = "vtf"
+local Derama = {
+	ConfigTable = {
+		--------------------------------------------------------------------------
+		-- Use this for reference, comment it out whenever.
+
+		--Aim
+		["Aim.AimbotType.combobox"] = {
+			Option = "ViewAngles",
+			Options = {"ViewAngles", "Context Menu", "Mouse Input"},
+		},
+		["Aim.AimbotBones.combobox"] = {
+			Option = "Head",
+			Options = {"Head", "Chest", "Stomach", "Left Arm", "Right Arm", "Left Leg", "Right Leg", "Random"},
+		},
+		["Aim.AimChecks.combobox"] = {
+			Option = "Closest to LocalPlayer",
+			Options = {"Closest to CrossHair", "Closest to LocalPlayer"},
+		},
+		["Aim.CompMethod.combobox"] = {
+			Option = "On Aimbot",
+			Options = {"On Aimbot", "Allways on"},
+		},
+		["Aim.binder"] = KEY_LALT,
+		--["Visuals.WorldModulation.combobox"] = false,
+		["Visuals.EnableFOV.combobox"] = true,
+		["Movement.movement.autojump"] = true,
+		["Aim.Predictions.Checkbox"] = true,
+		["Aim.Aimbot.checkbox"] = true,
+		["Aim.0Interp.checkbox"] = true,
+		["Aim.SeedAmmount.slider"] = 33,
+		["Aim.Aimbot.fovCircleColor.checkbox"] = true,
+		["Aim.fovCircleColor.colormixer"] = Color(255, 0, 0),
+		["Aim.Aimbot.Target.colormixer"] = Color(255, 0, 0),
+		["Aim.Aimbot.Target.checkbox"] = true,
+		["Aim.Fov.slider"] = 30,
+		["Aim.Left.slider"] = 1 - 1,
+		["Aim.Right.slider"] = 1 - 1,
+		["Aim.Up.slider"] = 1 - 1,
+		--Rage
+        ["Visuals.FakeAngChams.colormixer"] = Color(255,60,255,255),
+		["Rage.AntiAim.yaw.combobox"] = {
+			Option = "Custom",
+			Options = {"Spin", "Jitter", "Back", "SideWays", "Custom"},
+		},
+		["Rage.AntiAim.pitch.combobox"] = {
+			Option = "Custom",
+			Options = {"Up & Down", "Down", "Up", "Custom"},
+		},
+		["Rage.AntiAim.Fakeyaw.combobox"] = {
+			Option = "Custom",
+			Options = {"Spin", "Jitter", "Back", "SideWays", "Custom"},
+		},
+		["Rage.AntiAim.Fakepitch.combobox"] = {
+			Option = "Custom",
+			Options = {"Up & Down", "Down", "Up", "Custom"},
+		},
+		["Rage.FakeLag.slider"] = 6,
+		--Movement
+		["Movement.Select.bhop"] = {
+			Option = "Directional",
+			Options = {"Directional", "Legit", "Rage"},
+		},
+		["Movement.slowmotion.slider"] = 150,
+        ["Movement.spawnwheel.binder"] = MOUSE_MIDDLE,
+        ["movement.prop.name"] = "models/Mechanics/gears2/vert_18t1.mdl",
+		--Visuals
+		["Visuals.2DBox.colormixer"] = Color(255, 255, 255, 255),
+		["Visuals.HealthBar.colormixer"] = Color(0, 255, 0, 255),
+		["Visuals.FillBox.colormixer"] = Color(255, 255, 255, 20),
+		["Visuals.Name.colormixer"] = Color(255, 255, 255, 255),
+		["Visuals.WeaponESP.colormixer"] = Color(255, 255, 255, 255),
+		["Visuals.Arms.Chams.colormixer"] = Color(255, 255, 255, 255),
+		["Visuals.Weapon.Chams.colormixer"] = Color(255, 255, 255, 255),
+		["Visuals.Chams.colormixer"] = Color(255, 255, 255, 255),
+		["Visuals.job.colormixer"] = Color(255, 255, 255, 255),
+		["Visuals.UserGroup.colormixer"] = Color(255, 255, 255, 255),
+		["Visuals.Line.colormixer"] = Color(255, 255, 255, 255),
+		["Visuals.Skeleton.colormixer"] = Color(255, 255, 255),
+		["Visuals.Armor.colormixer"] = Color(255, 255, 255, 255),
+		["Visuals.viewmodelPostion.combobox"] = true,
+		["Visuals.ViewModelx.slider"] = 0,
+		["Visuals.ViewModely.slider"] = -1,
+		["Visuals.ViewModelz.slider"] = -3,
+		["Visuals.Chams.Material.combobox"] = {
+			Option = "glow",
+			Options = {"flat", "glow", "metallic", "wireframe", "fireframe", "glowframe", "islandwater", "islandframe", "CodFrame", "Darkmatter"},
+		},
+		["Visuals.Arms.Material.combobox"] = {
+			Option = "glow",
+			Options = {"flat", "glow", "metallic", "wireframe", "fireframe", "glowframe", "islandwater", "islandframe", "CodFrame", "Darkmatter"},
+		},
+		["Visuals.Weapon.Material.combobox"] = {
+			Option = "glow",
+			Options = {"flat", "glow", "metallic", "wireframe", "fireframe", "glowframe", "islandwater", "islandframe", "CodFrame", "Darkmatter"},
+		},
+		["Visuals.Bullet.Trace.Material.combobox"] = {
+			Option = "particle/bendibeam",
+			Options = {"particle/bendibeam","cable/redlaser","cable/physbeam","cable/hydra"},
+		},
+        ["Visuals.bullet.size"] = 5,
+		["Visuals.Health.Line.colormixer"] = Color(0, 255, 0, 255),
+		["Visuals.3DBox.colormixer"] = Color(255, 0, 0, 255),
+		["Visuals.PlayeFOV.slider"] = 130,
+		["Visuals.KillSounds.combobox"] = "phx/hmetal1.wav",
+		["Visuals.HitSounds.combobox"] = "garrysmod/balloon_pop_cute.wav",
+		["Visuals.Skybox.ComboBox"] = {
+			Option = sv_skyname:GetString(),
+			Options = {sv_skyname:GetString()},
+		},
+		["Visuals.ESPDistance.slider"] = 1500,
+		["Visuals.FakeAngMaterial.combobox"] = {
+			Option = "glow",
+			Options = {"flat", "glow", "metallic", "wireframe", "fireframe", "glowframe", "islandwater", "islandframe", "CodFrame", "Darkmatter"},
+		},
+		["Visuals.BoxType.combobox"] = {
+			Option = "Outlined",
+			Options = {"Outlined", "not Outlined :("},
+		},
+
+        ["Visuals.BulletTracers.combobox"] = true,
+        ["Visuals.BulletTracers.Color.colormixer"] = Color(255,255,255,255),
+        ["Visuals.HitPlace.colormixer"] = Color(255,255,255,255),
+
+		["Visuals.Sky.ColorModulation.colormixer"] = Color(0, 255, 0),
+		["Visuals.ExodiumHUDSEnable.combobox"] = true,
+		["Aim.WaterMark.checkbox"] = true,
+		["Visuals.fov.CheckBox"] = true,
+		["Visuals.fov.slider"] = API.GetConVar("fov_desired"):GetFloat(),
+		["Visuals.HitSounds.CheckBox"] = true,
+		["tab.slider"] = 15.9,
+		["tab.colormixer"] = Color(255, 0, 0, 255),
+		["tab.textentry"] = "entry text",
+		--------------------------------------------------------------------------
+		["settings.menu.button"] = KEY_INSERT,
+		["settings.unload"] = nil,
+		["settings.config"] = {
+			Option = "",
+			Options = {},
+		},
+		["settings.config.name"] = "",
+		["settings.config.rename"] = nil,
+		["settings.config.save"] = nil,
+		["settings.config.load"] = nil,
+		["settings.config.delete"] = nil, -- 187, 60, 60
+		["Misc.TitleBarsAndButtons.colormixer"] = Color(170, 7, 7),
+		["Misc.MenuText.colormixer"] = Color(205, 205, 205, 255),
+		["Misc.OutlINES.colormixer"] = Color(0, 0, 0),
+		["Misc.MenuTransparency.colormixer"] = Color(35, 35, 35, 255),
+		["Misc.Background.colormixer"] = Color(0, 0, 0, 0),
+		["Misc.crosshairDetails.colormixer"] = Color(255, 255, 255),
+		["Misc.vapefun.binder"] = KEY_F,
+        ["Misc.mutinybitcoin.binder"] = KEY_E,
+		WasKeyDown = {},
+		IsDown = {},
+		IsPressed = {},
+	},
+	LayoutTable = { //NEVER EEEEEEEEEEEVEER FORMAT THE CHEAT IT FUCKED THE TABLE E9WIOAVWIDA0VDWA0VID
+		--------------------------------------------------------------------------
+		-- Use this for reference, comment it out whenever.
+		-- The "Variable" is the value of the data type of the gui element which is supposed to be set above by first identifying it by a config variable.
+		-- You can also align the elements using "Align" which you set to a string either "Center" or "Right", "Left" is set automatically.
+		{
+			Title = "Aim",
+			Controls = {
+				{
+					Type = "CheckBox",
+					Text = "Aimbot",
+					Variable = "Aim.Aimbot.checkbox"
+				},
+				{
+					Type = "ComboBox",
+					Text = "Aimbot-Type",
+					Variable = "Aim.AimbotType.combobox"
+				},
+				{
+					Type = "ComboBox",
+					Text = "Body-part",
+					Variable = "Aim.AimbotBones.combobox"
+				},
+				{
+					Type = "Binder",
+					Text = "Bind",
+					Variable = "Aim.binder"
+				},
+				{
+					Type = "Slider",
+					Align = "Left",
+					Text = "Aimbot-Fov",
+					Minimum = 1,
+					Maximum = 180,
+					Decimals = 0,
+					Variable = "Aim.Fov.slider"
+				},
+				{
+					Type = "CheckBox",
+					Align = "Left",
+					Text = "Auto-Shoot",
+					Variable = "Aim.AutoShoot.combobox"
+				},
+				{
+					Type = "CheckBox",
+					Align = "Left",
+					Text = "Auto-Reload",
+					Variable = "Aim.AutoReload.combobox"
+				},
+				{
+					Type = "CheckBox",
+					Align = "Left",
+					Text = "Ignore-Team",
+					Variable = "Aim.Team.combobox"
+				},
+				{
+					Type = "CheckBox",
+					Align = "Left",
+					Text = "Ignore-ply-on-car",
+					Variable = "Aim.car.combobox"
+				},
+				{
+					Type = "CheckBox",
+					Align = "Left",
+					Text = "Ignore-Admins & superAdmins",
+					Variable = "Aim.IgnoreAdmins.combobox"
+				},
+				{
+					Type = "CheckBox",
+					Align = "Left",
+					Text = "Ignore-Build-mode-Players",
+					Variable = "Aim.IgnoreBuild.combobox"
+				},
+				{
+					Type = "CheckBox",
+					Align = "Left",
+					Text = "ignore-bots",
+					Variable = "Aim.Ignorebot.combobox"
+				},
+				{
+					Type = "CheckBox",
+					Align = "Right",
+					Text = "NoSpread",
+					Variable = "Aim.Nospread.combobox"
+				},
+				{
+					Type = "CheckBox",
+					Align = "Right",
+					Text = "NoRecoil",
+					Variable = "Aim.Recoil.combobox"
+				},
+				{
+					Type = "ComboBox",
+					Align = "Right",
+					Text = "Compensation-method",
+					Variable = "Aim.CompMethod.combobox"
+				},
+				{
+					Type = "CheckBox",
+					Align = "Right",
+					Text = "Lerp-Compensation",
+					Variable = "Aim.0Interp.checkbox"
+				},
+				{
+					Type = "CheckBox",
+					Align = "Right",
+					Text = "Engine-Prediction",
+					Variable = "Aim.EnginePred.checkbox"
+				},
+				{
+					Type = "CheckBox",
+					Align = "Right",
+					Text = "Forward-Tracking",
+					Variable = "Aim.extrapolation.checkbox"
+				},
+				{
+					Type = "CheckBox",
+					Align = "Right",
+					Text = "Movement-Fix",
+					Variable = "Aim.FixShit.checkbox"
+				},
+				{
+					Type = "CheckBox",
+					Align = "Right",
+					Text = "Silent-Angles",
+					Variable = "Aim.slAngles.checkbox"
+				},
+				{
+					Type = "CheckBox",
+					Align = "Right",
+					Text = "Seed-Nospread",
+					Variable = "Aim.Seednospread.checkbox"
+				},
+				{
+					Type = "Slider",
+					Align = "Right",
+					Text = "Ammount",
+					Minimum = 1,
+					Maximum = 250,
+					Variable = "Aim.SeedAmmount.slider"
+				},
+				{
+					Type = "CheckBox",
+					Align = "Center",
+					Text = "TriggerBot",
+					Variable = "Aim.TriggerBot.checkbox"
+				},
+				{
+					Type = "Binder",
+					Align = "Center",
+					Text = "Bind",
+					Variable = "Aim.Triggerbot.binder"
+				},
+				{
+					Type = "CheckBox",
+					Align = "Left",
+					Text = "Aimbot-Fov",
+					Variable = "Aim.Aimbot.fovCircleColor.checkbox"
+				},
+				{
+					Type = "Decreser",
+					Align = "Left"
+				},
+				{
+					Type = "ColorMixer",
+					Align = "Left",
+					Text = "",
+					Variable = "Aim.fovCircleColor.colormixer"
+				},
+				{
+					Type = "CheckBox",
+					Align = "Left",
+					Text = "Snap-Line",
+					Variable = "Aim.Aimbot.Target.checkbox"
+				},
+				{
+					Type = "Decreser",
+					Align = "Left"
+				},
+				{
+					Type = "ColorMixer",
+					Align = "Left",
+					Text = "",
+					Variable = "Aim.Aimbot.Target.colormixer"
+				},
+			}
+		},
+		--------------------------------------------------------------------------
+		{
+			Title = "Rage",
+			Controls = {
+				{
+					Type = "CheckBox",
+					Text = "Legit-Anti-Aim",
+					Variable = "Rage.AntiAim.checkbox"
+				},
+				{
+					Type = "ComboBox",
+					Text = "Real-Yaw",
+					Variable = "Rage.AntiAim.yaw.combobox"
+				},
+				{
+					Type = "ComboBox",
+					Text = "Real-Pitch",
+					Variable = "Rage.AntiAim.pitch.combobox"
+				},
+				{
+					Type = "Slider",
+					Text = "Real-Pitch",
+					Minimum = -89,
+					Maximum = 89,
+					Variable = "Rage.Pitch.slider"
+				},
+				{
+					Type = "Slider",
+					Text = "Real-Yaw",
+					Minimum = -180,
+					Maximum = 180,
+					Variable = "Rage.Yaw.slider"
+				},
+				{
+					Type = "Slider",
+					Text = "Spin-speed",
+					Minimum = 10,
+					Maximum = 1500,
+					Variable = "Rage.Spin.slider"
+				},
+                {
+					Type = "Label",
+					Align = "Center",
+					Text = "Angle-Desync",
+				},
+				{
+					Type = "ComboBox",
+					Align = "Center",                         
+					Text = "Fake-Yaw",
+					Variable = "Rage.AntiAim.Fakeyaw.combobox"
+				},
+				{
+					Type = "ComboBox",
+					Align = "Center",
+					Text = "Fake-Pitch",
+					Variable = "Rage.AntiAim.Fakepitch.combobox"
+				},
+				{
+					Type = "Slider",
+					Align = "Center",
+					Text = "Fake-Pitch",
+					Minimum = -89,
+					Maximum = 89,
+					Variable = "Rage.FakePitch.slider"
+				},
+				{
+					Type = "Slider",
+					Align = "Center",
+					Text = "Fake-Yaw",
+					Minimum = -180,
+					Maximum = 180,
+					Variable = "Rage.FakeYaw.slider"
+				},
+				{
+					Type = "Slider",
+					Align = "Center",
+					Text = "Spin-speed",
+					Minimum = 10,
+					Maximum = 1500,
+					Variable = "Rage.FakeSpin.slider"
+				},
+				{
+					Type = "CheckBox",
+					Align = "Right",
+					Text = "BruteForce-Resolver",
+					Variable = "Rage.Resolver.checkbox"
+				},
+				{
+					Type = "CheckBox",
+					Align = "Right",
+					Text = "AA-shoot",
+					Variable = "Rage.AAshoot.checkbox"
+				},
+				{
+					Type = "CheckBox",
+					Align = "Right",
+					Text = "Simple-Desync",
+					Variable = "Rage.desync.checkbox"
+				},
+				{
+					Type = "CheckBox",
+					Align = "Right",
+					Text = "Sequence-Manip",
+					Variable = "Rage.Sequencem.checkbox"
+				},
+				{
+					Type = "Slider",
+					Align = "Right",
+					Text = "Out-sequence",
+					Minimum = 1,
+					Maximum = 310,
+					Variable = "Rage.Sequencem.slider"
+				},
+				{
+					Type = "Slider",
+					Align = "Right",
+					Text = "Minimum sequence",
+					Minimum = 1,
+					Maximum = 310,
+					Variable = "Rage.OutSequencem.slider"
+				},
+				{
+					Type = "Binder",
+					Align = "Right",
+					Text = "Bind",
+					Variable = "Visuals.sequencem.binder"
+				},
+				{
+					Type = "CheckBox",
+					Align = "Right",
+					Text = "DoubleTap",
+					Variable = "Rage.DoubleTap.checkbox"
+				},
+				{
+					Type = "Slider",
+					Align = "Right",
+					Text = "Intensity",
+					Minimum = 1,
+					Maximum = 5,
+					Variable = "Rage.DoubleTap.slider"
+				},
+				{
+					Type = "CheckBox",
+					Align = "Center",
+					Text = "Fake-Lag",
+					Variable = "Rage.FakeLag.checkbox"
+				},
+				{
+					Type = "Slider",
+					Align = "Center",
+					Text = "Choked-Packets",
+					Minimum = 1,
+					Maximum = 100,
+					Variable = "Rage.FakeLag.slider"
+				},
+				{
+					Type = "CheckBox",
+					Align = "Right",
+					Text = "Dump-Bot",
+					Variable = "Rage.DumpBot.checkbox"
+				},
+				{
+					Type = "Binder",
+					Align = "Right",
+					Text = "Bind",
+					Variable = "Visuals.DumpBot.binder"
+				},
+				{
+					Type = "CheckBox",
+					Text = "Fake-Angle-Chams",
+					Variable = "Rage.FakeAngChams.checkbox"
+				},
+				{
+					Type = "Decreser",
+					Align = "Left"
+				},
+				{
+					Type = "ColorMixer",
+					Align = "Left",
+					Text = "",
+					Variable = "Visuals.FakeAngChams.colormixer"
+				},
+				{
+					Type = "ComboBox",
+					Align = "Left",
+					Text = "Material",
+					Variable = "Visuals.FakeAngMaterial.combobox"
+				},
+			}
+		},
+		{
+			Title = "Esp",
+			Controls = {
+				{
+					Type = "Label",
+					Align = "Center",
+					Text = "ESPN"
+				},
+				{
+					Type = "CheckBox",
+					Align = "Center",
+					Text = "Enable",
+					Variable = "Visuals.EnableESP.checkbox"
+				},
+				{
+					Type = "CheckBox",
+					Align = "Center",
+					Text = "2D-Box",
+					Variable = "Visuals.2DBox.checkbox"
+				},
+				{
+					Type = "Decreser",
+					Align = "Center"
+				},
+				{
+					Type = "ColorMixer",
+					Align = "Center",
+					Text = "",
+					Variable = "Visuals.2DBox.colormixer"
+				},
+				{
+					Type = "ComboBox",
+					Align = "Center",
+					Text = "Type-of-Box",
+					Variable = "Visuals.BoxType.combobox"
+				},
+				{
+					Type = "CheckBox",
+					Align = "Center",
+					Text = "Health-Bar",
+					Variable = "Visuals.Healthbar.checkbox"
+				},
+				{
+					Type = "Decreser",
+					Align = "Center"
+				},
+				{
+					Type = "ColorMixer",
+					Align = "Center",
+					Text = "",
+					Variable = "Visuals.HealthBar.colormixer"
+				},
+				{
+					Type = "CheckBox",
+					Align = "Center",
+					Text = "Fill Box",
+					Variable = "Visuals.FillBox.checkbox"
+				},
+				{
+					Type = "Decreser",
+					Align = "Center"
+				},
+				{
+					Type = "ColorMixer",
+					Align = "Center",
+					Text = "",
+					Variable = "Visuals.FillBox.colormixer"
+				},
+				{
+					Type = "CheckBox",
+					Align = "Center",
+					Text = "Name",
+					Variable = "Visuals.Name.checkbox"
+				},
+				{
+					Type = "Decreser",
+					Align = "Center"
+				},
+				{
+					Type = "ColorMixer",
+					Align = "Center",
+					Text = "",
+					Variable = "Visuals.Name.colormixer"
+				},
+				{
+					Type = "CheckBox",
+					Align = "Center",
+					Text = "Armour ",
+					Variable = "Visuals.Armor.checkbox"
+				},
+				{
+					Type = "Decreser",
+					Align = "Center"
+				},
+				{
+					Type = "ColorMixer",
+					Align = "Center",
+					Text = "",
+					Variable = "Visuals.Armor.colormixer"
+				},
+				{
+					Type = "CheckBox",
+					Align = "Center",
+					Text = "Weapon",
+					Variable = "Visuals.WeaponESP.checkbox"
+				},
+				{
+					Type = "Decreser",
+					Align = "Center"
+				},
+				{
+					Type = "ColorMixer",
+					Align = "Center",
+					Text = "",
+					Variable = "Visuals.WeaponESP.colormixer"
+				},
+				{
+					Type = "CheckBox",
+					Align = "Center",
+					Text = "Job",
+					Variable = "Visuals.JobESP.checkbox"
+				},
+				{
+					Type = "Decreser",
+					Align = "Center"
+				},
+				{
+					Type = "ColorMixer",
+					Align = "Center",
+					Text = "",
+					Variable = "Visuals.job.colormixer"
+				},
+				{
+					Type = "CheckBox",
+					Align = "Center",
+					Text = "UserGroup",
+					Variable = "Visuals.UserGroupESP.checkbox"
+				},
+				{
+					Type = "Decreser",
+					Align = "Center"
+				},
+				{
+					Type = "ColorMixer",
+					Align = "Center",
+					Text = "",
+					Variable = "Visuals.UserGroup.colormixer"
+				},
+				{
+					Type = "CheckBox",
+					Align = "Center",
+					Text = "Line",
+					Variable = "Visuals.Line.checkbox"
+				},
+				{
+					Type = "Decreser",
+					Align = "Center"
+				},
+				{
+					Type = "ColorMixer",
+					Align = "Center",
+					Text = "",
+					Variable = "Visuals.Line.colormixer"
+				},
+				{
+					Type = "CheckBox",
+					Align = "Center",
+					Text = "Skeleton",
+					Variable = "Visuals.Skeleton.checkbox"
+				},
+				{
+					Type = "Decreser",
+					Align = "Center"
+				},
+				{
+					Type = "ColorMixer",
+					Align = "Center",
+					Text = "",
+					Variable = "Visuals.Skeleton.colormixer"
+				},
+                {
+					Type = "Label",
+					Align = "Center",
+					Text = "Extras"
+				},
+                {
+                    Type = "CheckBox",
+                    Align = "Center",
+                    Text = "Box-Team-color",
+                    Variable = "Visuals.BoxTeam Color.checkbox"
+                },
+				{
+					Type = "Slider",
+					Align = "Center",
+					Text = "Distance-Ammount",
+					Minimum = 1,
+					Maximum = 20000,
+					Variable = "Visuals.ESPDistance.slider"
+				},
+				{
+					Type = "CheckBox",
+					Align = "Right",
+					Text = "Ignore-Tm8's",
+					Variable = "Visuals.IgnoreTM8.checkbox"
+				},
+                {
+					Type = "CheckBox",
+					Align = "Right",
+					Text = "Ignore-LocalPlayer",
+					Variable = "Visuals.ignorelocalplayer.checkbox"
+				},
+				{
+					Type = "CheckBox",
+					Align = "Right",
+					Text = "Ignore-BuildMode-Players",
+					Variable = "Visuals.IgnoreBuildmode.checkbox"
+				},
+				{
+					Type = "CheckBox",
+					Align = "Right",
+					Text = "Ignore-Players-in-Vehicles",
+					Variable = "Visuals.Ignorevch.checkbox"
+				},
+				{
+					Type = "CheckBox",
+					Align = "Right",
+					Text = "Ignore-Bots",
+					Variable = "Visuals.IgnoreBots.checkbox"
+				},
+				{
+					Type = "CheckBox",
+					Align = "Right",
+					Text = "Ignore-Admins",
+					Variable = "Visuals.IgnoreAdmins.checkbox"
+				},
+				{
+					Type = "CheckBox",
+					Align = "Right",
+					Text = "Ignore-Players-in-Spawn",
+					Variable = "Visuals.IgnoreSpawn.checkbox"
+				},
+				{
+					Type = "PlayerShowCase",
+					Align = "Left"
+				},
+				{
+					Type = "Label",
+					Align = "Right",
+					Text = "Chams"
+				},
+				{
+					Type = "CheckBox",
+					Align = "Right",
+					Text = "Chams",
+					Variable = "Visuals.Chams.checkbox"
+				},
+				{
+					Type = "Decreser",
+					Align = "Right"
+				},
+				{
+					Type = "ColorMixer",
+					Align = "Right",
+					Text = "",
+					Variable = "Visuals.Chams.colormixer"
+				},
+				{
+					Type = "ComboBox",
+					Align = "Right",
+					Text = "Material",
+					Variable = "Visuals.Chams.Material.combobox"
+				}
+			}
+		},
+		{
+			Title = "Visuals",
+			Controls = {
+				{
+					Type = "CheckBox",
+					Align = "Left",
+					Text = "Weapon Chams",
+					Variable = "Visuals.Weapon.Chams.combobox"
+				},
+				{
+					Type = "Decreser",
+					Align = "Left"
+				},
+				{
+					Type = "ColorMixer",
+					Align = "Left",
+					Text = "",
+					Variable = "Visuals.Weapon.Chams.colormixer"
+				},
+				{
+					Type = "ComboBox",
+					Align = "Left",
+					Text = "Material",
+					Variable = "Visuals.Weapon.Material.combobox"
+				},
+				{
+					Type = "CheckBox",
+					Align = "Right",
+					Text = "Skybox-Changer",
+					Variable = "Visuals.Skybox.Changer.combobox"
+				},
+				{
+					Type = "ComboBox",
+					Align = "Right",
+					Text = "Skybox",
+					Variable = "Visuals.Skybox.ComboBox"
+				},
+				{
+					Type = "CheckBox",
+					Align = "Right",
+					Text = "Sky-Color-Modulation",
+					Variable = "Visuals.skycolor.combobox"
+				},
+				{
+					Type = "Decreser",
+					Align = "Right"
+				},
+				{
+					Type = "ColorMixer",
+					Align = "Right",
+					Text = "",
+					Variable = "Visuals.Sky.ColorModulation.colormixer"
+				},
+				{
+					Type = "CheckBox",
+					Align = "Right",
+					Text = "Remove-fake-shit-from-map",
+					Variable = "Visuals.FakeShit.combobox"
+				},
+				{
+					Type = "CheckBox",
+					Align = "Right",
+					Text = "Third-person",
+					Variable = "Visuals.thirdperson.CheckBox"
+				},
+				{
+					Type = "Slider",
+					Align = "Right",
+					Text = "Ammount",
+					Minimum = 70,
+					Maximum = 200,
+					Variable = "Visuals.thirdpersonfov.slider"
+				},
+				{
+					Type = "CheckBox",
+					Align = "Right",
+					Text = "No-visual-recoil",
+					Variable = "Visuals.norecoil.CheckBox"
+				},
+				{
+					Type = "CheckBox",
+					Align = "Right",
+					Text = "Field-of-view",
+					Variable = "Visuals.fov.combobox"
+				},
+				{
+					Type = "Slider",
+					Align = "Right",
+					Text = "Ammount",
+					Minimum = API.GetConVar("fov_desired"):GetFloat(),
+					Maximum = 160,
+					Variable = "Visuals.fov.slider"
+				},
+				{
+					Type = "CheckBox",
+					Align = "Center",
+					Text = "Bullet-Tracers",
+					Variable = "Visuals.BulletTracers.combobox"
+				},
+				{
+					Type = "Decreser",
+					Align = "Center"
+				},
+				{
+					Type = "ColorMixer",
+					Align = "Center",
+					Text = "",
+					Variable = "Visuals.BulletTracers.Color.colormixer"
+				},
+                {
+					Type = "Slider",
+					Align = "Center",
+					Text = "Width",
+					Minimum = 1,
+					Maximum = 20,
+					Variable = "Visuals.bullet.size"
+				},
+				{
+					Type = "ComboBox",
+					Align = "Center",
+					Text = "Material",
+					Variable = "Visuals.Bullet.Trace.Material.combobox"
+				},
+				{
+					Type = "Label",
+					Align = "Left",
+					Text = "Exodium-HUDS"
+				},
+				{
+					Type = "CheckBox",
+					Align = "Left",
+					Text = "Enable",
+					Variable = "Visuals.ExodiumHUDSEnable.combobox"
+				},
+				{
+					Type = "CheckBox",
+					Align = "Left",
+					Text = "Exodium-v3-HUD",
+					Variable = "Visuals.ExodiumV3.combobox"
+				},
+				{
+					Type = "CheckBox",
+					Align = "Left",
+					Text = "Fake Ducking",
+					Variable = "Visuals.FakeDucking.combobox"
+				},
+				{
+					Type = "CheckBox",
+					Align = "Left",
+					Text = "SendPacket",
+					Variable = "Visuals.SendPacket.combobox"
+				},
+				{
+					Type = "CheckBox",
+					Align = "Left",
+					Text = "WaterMark",
+					Variable = "Aim.WaterMark.checkbox"
+				},
+				{
+					Type = "CheckBox",
+					Align = "Left",
+					Text = "CrossHair Details",
+					Variable = "Aim.crosshair.checkbox"
+				},
+				{
+					Type = "Decreser",
+					Align = "Left"
+				},
+				{
+					Type = "ColorMixer",
+					Align = "Left",
+					Text = "",
+					Variable = "Misc.crosshairDetails.colormixer"
+				},
+				{
+					Type = "Label",
+					Align = "Center",
+					Text = "Fancy-nigga-shit"
+				},
+				{
+					Type = "CheckBox",
+					Align = "Center",
+					Text = "3D Box Hit",
+					Variable = "Visuals.HitPlace.CheckBox"
+				},
+				{
+					Type = "Decreser",
+					Align = "Center"
+				},
+				{
+					Type = "ColorMixer",
+					Align = "Center",
+					Text = "",
+					Variable = "Visuals.HitPlace.colormixer"
+				},
+			}
+		},
+		{
+			Title = "Movement",
+			Controls = {
+				{
+					Type = "CheckBox",
+					Align = "Left",
+					Text = "Bunny-Hop",
+					Variable = "Movement.movement.autojump"
+				},
+				{
+					Type = "ComboBox",
+					Text = "Bunny hop Mode",
+					Variable = "Movement.Select.bhop"
+				},
+				{
+					Type = "CheckBox",
+					Align = "Center",
+					Text = "Fake-Duck",
+					Variable = "Movement.Fake.kDuc.Peek"
+				},
+				{
+					Type = "CheckBox",
+					Align = "Center",
+					Text = "Aim-Down",
+					Variable = "Movement.Fake.duckDown.Peek"
+				},
+				{
+					Type = "Binder",
+					Align = "Center",
+					Text = "Fake-Duck-Key",
+					Variable = "Movement.Fake.Duck.binder"
+				},
+				{
+					Type = "CheckBox",
+					Align = "Left",
+					Text = "AirStuck",
+					Variable = "Movement.Air.Stuck.Peek"
+				},
+				{
+					Type = "Binder",
+					Align = "Left",
+					Text = "AirStuck-Key",
+					Variable = "Movement.Air.Stuck.binder"
+				},
+				{
+					Type = "CheckBox",
+					Align = "Right",
+					Text = "Slow-Motion",
+					Variable = "Movement.Slow.Motion.Peek"
+				},
+                				{
+					Type = "Slider",
+					Align = "Right",
+					Text = "Ammount",
+					Minimum = 100,
+					Maximum = 150,
+					Variable = "Movement.slowmotion.slider"
+				},
+                {
+					Type = "Binder",
+					Align = "Right",
+					Text = "Bind",
+					Variable = "Visuals.SlowMotion.binder"
+				},
+                {
+					Type = "CheckBox",
+					Align = "Right",
+					Text = "Spawn-Prop",
+					Variable = "Movement.spawnwheel.checkbox"
+				},
+                {
+					Type = "TextEntry",
+					Align = "Right",
+					Text = "Name",
+					Variable = "movement.prop.name"
+				},
+				{
+					Type = "Binder",
+					Align = "Right",
+					Text = "Key",
+					Variable = "Movement.spawnwheel.binder"
+				},
+			}
+		},
+		{
+			Title = "Misc",
+			Controls = {
+				{
+					Type = "Binder",
+					Text = "Menu-Button",
+					Variable = "settings.menu.button"
+				},
+				{
+					Type = "Button",
+					Text = "Unload",
+					Variable = "settings.unload"
+				},
+				{
+					Type = "ComboBox",
+					Align = "Center",
+					Text = "Config",
+					Variable = "settings.config"
+				},
+				{
+					Type = "TextEntry",
+					Align = "Center",
+					Text = "Name",
+					Variable = "settings.config.name"
+				},
+				{
+					Type = "Button",
+					Align = "Center",
+					Text = "Rename",
+					Variable = "settings.config.rename"
+				},
+				{
+					Type = "Button",
+					Align = "Center",
+					Text = "Save",
+					Variable = "settings.config.save"
+				},
+				{
+					Type = "Button",
+					Align = "Center",
+					Text = "Load",
+					Variable = "settings.config.load"
+				},
+				{
+					Type = "Button",
+					Align = "Center",
+					Text = "Delete",
+					Variable = "settings.config.delete"
+				},
+				{
+					Type = "CheckBox",
+					Align = "Center",
+					Text = "RusElite Movement Fix",
+					Variable = "Misc.RusEliteFix.Peek"
+				},
+				{
+					Type = "CheckBox",
+					Align = "Center",
+					Text = "Disable Interpolation",
+					Variable = "Misc.Interpolation.Peek"
+				},
+				{
+					Type = "Label",
+					Align = "Left",
+					Text = ""
+				},
+				{
+					Type = "ColorMixer",
+					Align = "Left",
+					Text = "Menu Color",
+					Variable = "Misc.TitleBarsAndButtons.colormixer"
+				},
+				{
+					Type = "ColorMixer",
+					Align = "Left",
+					Text = "Text Color",
+					Variable = "Misc.MenuText.colormixer"
+				},
+				{
+					Type = "ColorMixer",
+					Align = "Left",
+					Text = "Outlines Color",
+					Variable = "Misc.OutlINES.colormixer"
+				},
+				{
+					Type = "ColorMixer",
+					Align = "Left",
+					Text = "BackGround menu",
+					Variable = "Misc.MenuTransparency.colormixer"
+				},
+				{
+					Type = "ColorMixer",
+					Align = "Left",
+					Text = "Main Menu",
+					Variable = "Misc.Background.colormixer"
+				},
+				{
+					Type = "Label",
+					Align = "Right",
+					Text = "Funny Shit"
+				},
+				{
+					Type = "CheckBox",
+					Align = "Right",
+					Text = "FlashLight spam",
+					Variable = "Misc.FlashLight.checkbox"
+				},
+				{
+					Type = "Slider",
+					Align = "Right",
+					Text = "speed of spam",
+					Minimum = 1,
+					Maximum = 10,
+					Variable = "Movementflashspamm.slider"
+				},
+				{
+					Type = "CheckBox",
+					Align = "Right",
+					Text = "Vape Voice Spammer",
+					Variable = "Misc.vapefun.checkbox"
+				},
+				{
+					Type = "Binder",
+					Align = "Right",
+					Text = "Bind",
+					Variable = "Misc.vapefun.binder"
+				},
+                {
+					Type = "CheckBox",
+					Align = "Right",
+					Text = "Mutiny Bitcoin Grabber",
+					Variable = "Misc.mutinybitcoin.checkbox"
+				},
+				{
+					Type = "Binder",
+					Align = "Right",
+					Text = "Bind",
+					Variable = "Misc.mutinybitcoin.binder"
+				},
+
+                {
+					Type = "CheckBox",
+					Align = "Right",
+					Text = "Weed Menu",
+					Variable = "Misc.zaza menu.checkbox"
+				},
+				{
+					Type = "Binder",
+					Align = "Right",
+					Text = "Bind",
+					Variable = "Misc.openmenu.binder"
+				},
+
+				{
+					Type = "CheckBox",
+					Align = "Right",
+					Text = "Spamm Mouse1",
+					Variable = "Misc.SpammM1.checkbox"
+				},
+				{
+					Type = "Binder",
+					Align = "Right",
+					Text = "Bind",
+					Variable = "settings.M1spamm.binder"
+				},
+
+                {
+					Type = "Label",
+					Align = "Right",
+					Text = "Sound stuff"
+				},
+				{
+					Type = "CheckBox",
+					Align = "Right",
+					Text = "Enable",
+					Variable = "Visuals.HitSounds.CheckBox"
+				},
+				{
+					Type = "TextEntry",
+					Align = "Right",
+					Text = "KillSounds",
+					Variable = "Visuals.KillSounds.combobox"
+				},
+				{
+					Type = "TextEntry",
+					Align = "Right",
+					Text = "HitSounds",
+					Variable = "Visuals.HitSounds.combobox"
+				},
+
+				{
+					Type = "CheckBox",
+					Align = "Center",
+					Text = "Name Changer",
+					Variable = "Misc.NameChanger.checkbox"
+				},
+				{
+					Type = "TextEntry",
+					Align = "Center",
+					Text = "Name",
+					Variable = "Misc.NameChanger.textentry"
+				},
+			}
+		},
+	},
+}
+
+local Util = {
+	Buttons = {},
+	Hooks = {}
+}
+
+local TestForPerformance = false
+local Start, Duration = CurTime(), 0.4
+exodium.NotificationsPLS = {}
+function exodium.Notifications(text, YourColor, Warning)
+	TestForPerformance = true
+	table.insert(exodium.NotificationsPLS, {
+		text = text,
+		YourColor = YourColor,
+		Warning = Warning,
+		startTime = CurTime(),
+		Duration = 2,
+		IsVisible = false
+	})
+end
+
+function exodium.Nots()
+	local ShouldWe = {}
+	local FunnyHeight = 0
+	for k, v in pairs(exodium.NotificationsPLS) do
+		local FAK = CurTime() - v.startTime
+		local Anim = exodium.OutQuint(exodium.Clamp(FAK / 0.6, 0, 1))
+		local Val, Val2, TextL
+		local IsVis = false
+		local Input = v.text
+		local TextCol = nil
+		OriginalSurface_SetFont("NotificationsFont")
+		local width, height = OriginalSurfaceGetSize(Input)
+		if FAK < v.Duration then
+			Val = Lerp(Anim, -200, width + 10)
+			Val2 = Lerp(Anim, -200, width + 10)
+			TextL = Lerp(Anim, -225, width + 5)
+		else
+			local ReturnAnim = exodium.InCirc(exodium.Clamp((FAK - v.Duration) / 0.5, 0, 1))
+			Val = Lerp(ReturnAnim, width + 10, -200)
+			Val2 = Lerp(ReturnAnim, width + 10, -200)
+			TextL = Lerp(ReturnAnim, width + 5, -225)
+			if ReturnAnim == 1 then table.insert(ShouldWe, k) end
+		end
+
+		local Pos = FunnyHeight
+		local text = Pos + 10
+
+        DrawCustomRect(Derama.ConfigTable["Misc.MenuTransparency.colormixer"],-1, Pos, Val, 35)
+        DrawTexturedRect(gradientMatUp, Color(15, 15, 15, 255), -1, Pos, Val, 35)
+        DrawCustomRect(v.YourColor or Derama.ConfigTable["Misc.TitleBarsAndButtons.colormixer"], -1, Pos, Val, 3)
+        DrawCustomOutlinedRect(Derama.ConfigTable["Misc.OutlINES.colormixer"],-1, Pos, Val, 35)
+
+		if v.Warning then
+			TextCol = Color(252, 255, 0)
+		else
+			TextCol = Derama.ConfigTable["Misc.MenuText.colormixer"]
+		end
+
+		DrawCustomText(TextCol, TextL - width, Pos + height - 6, Input, "NotificationsFont")
+		FunnyHeight = FunnyHeight + 35
+	end
+
+	for i = 1, #ShouldWe do
+		table.remove(exodium.NotificationsPLS, ShouldWe[i])
+	end
+end
+
+exodium.MathFuncs = false
+function Util.IsButtonPressed(Button)
+	if Util.Buttons[Button] == nil then Util.Buttons[Button] = true end
+	return exodium:ButtonDown(Button) and not Util.Buttons[Button]
+end
+
+function Util.UpdateButtons()
+	for Button = BUTTON_CODE_NONE, BUTTON_CODE_COUNT do
+		Util.Buttons[Button] = exodium:ButtonDown(Button)
+	end
+end
+
+function GUI.Label(ScrollPanel, Control, XPosition, YPosition)
+	if not Control.Text then Control.Text = "This is a Label" end
+	if not Control.XPosition then Control.XPosition = 0 end
+	if not Control.YPosition then Control.YPosition = 0 end
+	XPosition = XPosition + Control.XPosition
+	YPosition = YPosition + Control.YPosition
+	local Label = vgui.Create("DLabel", ScrollPanel)
+	Label:SetPos(XPosition, YPosition)
+	Label:SetTextColor(Color(0, 0, 0, 0))
+	Label:SetPaintedManually(true)
+	Label.Paint = function(self, Width, Height)
+		self:SetText(Control.Text)
+		OriginalSurface_SetFont("BetterDermaDefault")
+		draw.SimpleTextOutlined(self:GetText(), "BetterDermaDefault", 1, 0, Derama.ConfigTable["Misc.MenuText.colormixer"], TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP, 1, Color(0, 0, 0, 255 / 3))
+		self:SetWidth(OriginalSurfaceGetSize(self:GetText()) + 1)
+	end
+end
+
+function GUI.CheckBox(ScrollPanel, Control, XPosition, YPosition)
+	if not Control.Text then Control.Text = "This is a CheckBox" end
+	if not Control.XPosition then Control.XPosition = 0 end
+	if not Control.YPosition then Control.YPosition = 0 end
+	XPosition = XPosition + Control.XPosition
+	YPosition = YPosition + Control.YPosition
+	if not Control.Variable then Control.Variable = Control.Text end
+	if not Derama.ConfigTable[Control.Variable] then Derama.ConfigTable[Control.Variable] = false end
+	local CheckBox = vgui.Create("DCheckBoxLabel", ScrollPanel)
+	CheckBox:SetText(Control.Text)
+	CheckBox:SetPos(XPosition, YPosition)
+	CheckBox.Label:SetTextColor(Color(0, 0, 0, 0))
+	CheckBox.Label:Dock(RIGHT)
+	CheckBox.Label:DockMargin(0, 0, 6, 0)
+	CheckBox:SetPaintedManually(true)
+	CheckBox.OnChange = function(self, Value) Derama.ConfigTable[Control.Variable] = Value end
+	CheckBox.Paint = function(self, Width, Height) self:SetValue(Derama.ConfigTable[Control.Variable]) end
+	CheckBox.Button.Paint = function(self, Width, Height)
+		if self:GetChecked() then
+			DrawCustomRect( Derama.ConfigTable["Misc.TitleBarsAndButtons.colormixer"], 0, 0, Width, Height)
+			DrawTexturedRect(gradientMatUp,Color(0, 0, 0, 200),0, 0, Width, Height )
+		end
+        DrawCustomOutlinedRect(Derama.ConfigTable["Misc.OutlINES.colormixer"],0, 0, Width, Height)
+	end
+
+	CheckBox.Label.Paint = function(self, Width, Height)
+		self:SetText(Control.Text)
+		draw.SimpleTextOutlined(self:GetText(), "BetterDermaDefault", 1, 0, Derama.ConfigTable["Misc.MenuText.colormixer"], TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP, 1, Color(0, 0, 0, 255 / 3))
+		self:SetWidth(OriginalSurfaceGetSize(self:GetText()) + 1)
+	end
+end
+
+function GUI.PlayerShowCase(ScrollPanel, Control, XPosition, YPosition)
+	if not Control.XPosition then Control.XPosition = 0 end
+	if not Control.YPosition then Control.YPosition = 0 end
+	local Player = vgui.Create("DModelPanel", ScrollPanel)
+	Player:SetSize(190, 400)
+	Player:SetPaintedManually(true)
+	function Player:LayoutEntity(ent)
+		return
+	end
+
+    local lospollos = Material("lospollostransparentNEW.png")
+
+	Player.PaintOver = function(self, w, h)
+
+        //DrawRect(Color(255,255,255,255), 0, 0, w, h)
+        DrawTexturedRect(lospollos, Color(255,255,255,255), 0, 20, w, h)
+        DrawCustomOutlinedRect(Derama.ConfigTable["Misc.OutlINES.colormixer"],0, 0, w, h, 1)
+		if Derama.ConfigTable["Visuals.EnableESP.checkbox"] then
+			if Derama.ConfigTable["Visuals.2DBox.checkbox"] then
+                DrawCustomOutlinedRect(OutlinedCol, 39, 31, w - 78, h - 62, 1)
+                DrawCustomOutlinedRect(OutlinedCol, 41, 33, w - 82, h - 66, 1)
+                DrawCustomOutlinedRect(Derama.ConfigTable["Visuals.2DBox.colormixer"],40, 32, w - 80, h - 64, 1)
+			end
+
+			if Derama.ConfigTable["Visuals.Healthbar.checkbox"] then
+				DrawCustomRect(Color(0,0,0),36, 32, w - 188, h - 64, 1)
+				DrawCustomRect(Derama.ConfigTable["Visuals.HealthBar.colormixer"],36, 32, w - 188, h - 64, 1)
+				DrawTexturedRect(gradientMatUp,Color(0, 0, 0, 200), 36, 32, w - 188, h - 64, 1)
+			end
+
+			local Text = "Player"
+			local t_w, t_h = OriginalSurfaceGetSize(Text)
+			if Derama.ConfigTable["Visuals.Name.checkbox"] then DrawCustomText(Derama.ConfigTable["Visuals.Name.colormixer"], 0 + w / 2 - (t_w / 2), 18, Text, "x88FontESP") end
+			if Derama.ConfigTable["Visuals.FillBox.checkbox"] then
+				DrawCustomRect(Derama.ConfigTable["Visuals.FillBox.colormixer"],40, 32, w - 80, h - 64, 1)
+			end
+		end
+	end
+end
+
+local PlayerStorage = {}
+function GUI.Button(ScrollPanel, Control, XPosition, YPosition)
+	if not Control.Text then Control.Text = "This is a Button" end
+	if not Control.XPosition then Control.XPosition = 0 end
+	if not Control.YPosition then Control.YPosition = 0 end
+	XPosition = XPosition + Control.XPosition
+	YPosition = YPosition + Control.YPosition
+	if not Control.Variable then Control.Variable = Control.Text end
+	if not Derama.ConfigTable[Control.Variable] then Derama.ConfigTable[Control.Variable] = function() Error("There is no function for this button!") end end
+	local Button = vgui.Create("DButton", ScrollPanel)
+	Button:SetText(Control.Text)
+	Button:SetSize(190, 20)
+	Button:SetPos(XPosition, YPosition)
+	Button:SetTextColor(Color(0, 0, 0, 0))
+	Button:SetPaintedManually(true)
+	Button.Paint = function(self, Width, Height)
+		local TextCol = Derama.ConfigTable["Misc.MenuText.colormixer"]
+
+        DrawCustomRect(Derama.ConfigTable["Misc.Background.colormixer"],0, 0, Width, Height)
+        DrawCustomOutlinedRect(Derama.ConfigTable["Misc.OutlINES.colormixer"],0, 0, Width, Height)
+
+		draw.SimpleText(self:GetText(), "BetterDermaDefault", Width / 2, Height / 2, TextCol, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+		if Derama.ConfigTable[Control.Variable] then self.DoClick = Derama.ConfigTable[Control.Variable] end
+	end
+end
+
+function GUI.Binder(ScrollPanel, Control, XPosition, YPosition)
+	if not Control.Text then Control.Text = "This is a Binder" end
+	if not Control.XPosition then Control.XPosition = 0 end
+	if not Control.YPosition then Control.YPosition = 0 end
+	XPosition = XPosition + Control.XPosition
+	YPosition = YPosition + Control.YPosition
+	GUI.Label(ScrollPanel, Control, XPosition, YPosition)
+	if not Control.Variable then Control.Variable = Control.Text end
+	if not Derama.ConfigTable[Control.Variable] then Derama.ConfigTable[Control.Variable] = KEY_NONE end
+	local Binder = vgui.Create("DBinder", ScrollPanel)
+	Binder:SetSize(190, 20)
+	Binder:SetPos(XPosition, YPosition + 15)
+	Binder:SetTextColor(Color(0, 0, 0, 0))
+	Binder:SetPaintedManually(true)
+	Binder.OnChange = function(self, Value) Derama.ConfigTable[Control.Variable] = Value end
+	Binder.Paint = function(self, Width, Height)
+        poop,tall = self:GetWide(), self:GetTall()
+        DrawCustomRect(Derama.ConfigTable["Misc.Background.colormixer"],0, 0, Width, Height)
+        DrawCustomOutlinedRect(Derama.ConfigTable["Misc.OutlINES.colormixer"],0, 0, Width, Height)
+		draw.SimpleText(self:GetText(), "BetterDermaDefault", Width / 2, Height / 2, Derama.ConfigTable["Misc.MenuText.colormixer"], TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+		if not self.Trapping then self:SetValue(Derama.ConfigTable[Control.Variable]) end
+	end
+    function Binder:OnMousePressed(code)
+        if code == MOUSE_RIGHT then
+            //
+        else
+            Derama.ConfigTable[Control.Variable] = Derama.ConfigTable[Control.Variable]
+            self:MouseCapture(true)
+            self.Depressed = true
+            self:OnDepressed()
+        end
+    end
+end
+
+function GUI.ComboBox(ScrollPanel, Control, XPosition, YPosition)
+	if not Control.Text then Control.Text = "This is a ComboBox" end
+	if not Control.XPosition then Control.XPosition = 0 end
+	if not Control.YPosition then Control.YPosition = 0 end
+	XPosition = XPosition + Control.XPosition
+	YPosition = YPosition + Control.YPosition
+	GUI.Label(ScrollPanel, Control, XPosition, YPosition)
+	if not Control.Variable then Control.Variable = Control.Text end
+	if not Derama.ConfigTable[Control.Variable] then
+		Derama.ConfigTable[Control.Variable] = {
+			Option = "",
+			Options = {}
+		}
+	end
+
+	local ComboBox = vgui.Create("DComboBox", ScrollPanel)
+	ComboBox:SetValue(Derama.ConfigTable[Control.Variable].Option)
+	ComboBox:SetSize(190, 20)
+	ComboBox:SetPos(XPosition, YPosition + 15)
+	ComboBox:SetTextColor(Color(0, 0, 0, 0))
+	ComboBox:SetSortItems(false)
+	ComboBox:SetPaintedManually(true)
+	ComboBox.DropButton:SetVisible(false)
+	ComboBox.OnSelect = function(self, Index, Value) Derama.ConfigTable[Control.Variable].Option = Value end
+	ComboBox.Paint = function(self, Width, Height)
+		self:SetValue(Derama.ConfigTable[Control.Variable].Option)
+		if self:IsMenuOpen() then
+			self.Menu:MoveToFront()
+			if exodium:ButtonDown(Derama.ConfigTable["settings.menu.button"]) then self:CloseMenu() end
+		end
+        DrawCustomRect(Derama.ConfigTable["Misc.Background.colormixer"],0, 0, Width, Height)
+        DrawCustomOutlinedRect(Derama.ConfigTable["Misc.OutlINES.colormixer"],0, 0, Width, Height)
+		draw.SimpleText(self:GetText(), "BetterDermaDefault", 10, Height / 2, Derama.ConfigTable["Misc.MenuText.colormixer"], TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+		draw.SimpleText(self:IsMenuOpen() and "5" or "6", "Marlett", Width - 5, Height / 2, Color(0, 0, 0), TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
+	end
+
+	local OriginalOnMenuOpened = ComboBox.OnMenuOpened
+	ComboBox.OnMenuOpened = function(self, Menu)
+        self:MoveToFront() 
+		OriginalOnMenuOpened(self, Menu)
+		local Children = Menu:GetCanvas():GetChildren()
+		for Index, Child in ipairs(Children) do
+			Child:SetTextColor(Color(0, 0, 0, 0))
+			Child.Paint = function(self, Width, Height)
+                DrawCustomRect(Derama.ConfigTable["Misc.MenuTransparency.colormixer"],0, 0, Width, Height)
+
+				if Index == 1 and #Children > 1 then
+                    DrawCustomOutlinedRect(Derama.ConfigTable["Misc.OutlINES.colormixer"], 0, -1, Width, Height + 2)
+				elseif Index == #Children then
+					DrawCustomOutlinedRect(Derama.ConfigTable["Misc.OutlINES.colormixer"], 0, -1, Width, Height + 1)
+				else
+					DrawCustomOutlinedRect(Derama.ConfigTable["Misc.OutlINES.colormixer"], 0, -1, Width, Height + 2)
+				end
+
+				draw.SimpleText(self:GetText(), "BetterDermaDefault", 10, Height / 2, Derama.ConfigTable["Misc.MenuText.colormixer"], TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+			end
+		end
+	end
+
+	local OriginalOpenMenu = ComboBox.OpenMenu
+	ComboBox.OpenMenu = function(self, ControlOpener)
+		self:Clear()
+		local Options = Derama.ConfigTable[Control.Variable].Options
+		if Options then
+			for Index, Option in ipairs(Options) do
+				self:AddChoice(tostring(Option))
+			end
+		end
+
+		OriginalOpenMenu(self, ControlOpener)
+	end
+end
+
+function GUI.Slider(ScrollPanel, Control, XPosition, YPosition)
+	if not Control.Text then Control.Text = "This is a ComboBox" end
+	if not Control.XPosition then Control.XPosition = 0 end
+	if not Control.YPosition then Control.YPosition = 0 end
+	XPosition = XPosition + Control.XPosition
+	YPosition = YPosition + Control.YPosition
+	GUI.Label(ScrollPanel, Control, XPosition, YPosition + 7)
+	if not Control.Variable then Control.Variable = Control.Text end
+	if not Derama.ConfigTable[Control.Variable] then Derama.ConfigTable[Control.Variable] = 0 end
+	if not Control.Minimum then Control.Minimum = -10 end
+	if not Control.Maximum then Control.Maximum = 10 end
+	if not Control.Decimals then Control.Decimals = 0 end
+	local Slider = vgui.Create("DNumSlider", ScrollPanel)
+	Slider:SetText(Control.Text)
+	Slider:SetSize(200, 20)
+	Slider:SetPos(XPosition - 5, YPosition + 20)
+	Slider:SetMin(Control.Minimum)
+	Slider:SetMax(Control.Maximum)
+	Slider:SetDecimals(Control.Decimals)
+	Slider:SetPaintedManually(true)
+	Slider.Label:SetVisible(false)
+	Slider.TextArea:SetVisible(false)
+	Slider.OnValueChanged = function(self, Value)
+		Derama.ConfigTable[Control.Variable] = exodium.Truncate(Value, self:GetDecimals())
+		if Derama.ConfigTable[Control.Variable] == -0 then Derama.ConfigTable[Control.Variable] = 0 end
+		self:SetValue(Derama.ConfigTable[Control.Variable])
+	end
+
+	local gradientMat = gradientMatUp
+	Slider.Slider.Paint = function(self, Width, Height)
+		local Dragging = self:GetDragging()
+		local XPosition, YPosition = self.Knob:GetPos()
+        DrawCustomRect(Derama.ConfigTable["Misc.TitleBarsAndButtons.colormixer"],5, YPosition, XPosition + 5, Height - 3)
+        DrawTexturedRect(gradientMat,Color(0, 0, 0, 200),5, YPosition, XPosition + 5, Height - 3)
+        DrawCustomOutlinedRect(Derama.ConfigTable["Misc.OutlINES.colormixer"],5, YPosition, Width - 10, Height - 2)
+	end
+
+	Slider.Slider.PaintOver = function(self, Width, Height)
+		Slider:SetValue(Derama.ConfigTable[Control.Variable])
+		draw.SimpleTextOutlined(Derama.ConfigTable[Control.Variable], "BetterDermaDefault", Width / 2, Height - 10, Derama.ConfigTable["Misc.MenuText.colormixer"], TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER, 1, Color(0, 0, 0, 255 / 3)) --YEANIGGA
+	end
+
+	Slider.Slider.Knob.Paint = function(self, Width, Height) end
+end
+
+local AlphaGrid = Material("gui/alpha_grid.png", "nocull")
+function GUI.ColorMixer(ScrollPanel, Control, XPosition, YPosition)
+	if not Control.Text then Control.Text = "This is a ColorMixer" end
+	if not Control.XPosition then Control.XPosition = 0 end
+	if not Control.YPosition then Control.YPosition = 0 end
+	XPosition = XPosition + Control.XPosition
+	YPosition = YPosition + Control.YPosition
+	GUI.Label(ScrollPanel, Control, XPosition - 175, YPosition)
+	if not Control.Variable then Control.Variable = Control.Text end
+	if not Derama.ConfigTable[Control.Variable] then Derama.ConfigTable[Control.Variable] = Color(0, 0, 0, 0) end
+	local Button = vgui.Create("DButton", ScrollPanel)
+	Button:SetText("")
+	Button:SetSize(15, 15)
+	Button:SetPos(XPosition, YPosition)
+	Button:SetTextColor(Color(0, 0, 0, 0))
+	Button:SetPaintedManually(true)
+	Button.Paint = function(self, Width, Height)
+        DrawTexturedRect(AlphaGrid,Color(210, 210, 210),0, 0, Width, Height)
+        DrawCustomRect(Derama.ConfigTable[Control.Variable],0, 0, Width, Height)
+        DrawCustomOutlinedRect(Derama.ConfigTable["Misc.OutlINES.colormixer"],0, 0, Width, Height)
+	end
+
+	local ColorMixer = nil
+	Button.DoClick = function(self)
+		if ColorMixer then
+			ColorMixer:SetVisible(not ColorMixer:IsVisible())
+			return
+		end
+
+		ColorMixer = vgui.Create("DColorMixer", ScrollPanel)
+		ColorMixer:SetSize(190, 100)
+		ColorMixer:SetPos(XPosition - 175, YPosition)
+		ColorMixer:SetPalette(false)
+		ColorMixer:SetAlphaBar(true)
+		ColorMixer:SetWangs(false)
+		ColorMixer:SetPaintedManually(true)
+		ColorMixer:SetColor(Derama.ConfigTable[Control.Variable])
+		ColorMixer.ValueChanged = function(self, Value) Derama.ConfigTable[Control.Variable] = Value end
+		ColorMixer.Paint = function(self, Width, Height)
+			if self:GetColor() ~= Derama.ConfigTable[Control.Variable] then self:SetColor(Derama.ConfigTable[Control.Variable]) end
+			if exodium:ButtonDown(Derama.ConfigTable["settings.menu.button"]) then self:SetVisible(not self:IsVisible()) end
+			if not (self:IsHovered() or (self.HSV:IsHovered() or self.HSV.Knob:IsHovered()) or self.Alpha:IsHovered() or self.RGB:IsHovered()) and Util.IsButtonPressed(MOUSE_LEFT) then self:SetVisible(not self:IsVisible()) end
+		end
+
+		ColorMixer.HSV.Knob.Paint = function(self, Width, Height)
+            DrawCustomRect(Color(255, 255, 255),3, 3, Width - 6, Height - 6)
+            DrawCustomOutlinedRect(Derama.ConfigTable["Misc.OutlINES.colormixer"],3, 3, Width - 6, Height - 6)
+		end
+	end
+end
+
+function GUI.TextEntry(ScrollPanel, Control, XPosition, YPosition)
+	if not Control.Text then Control.Text = "This is a TextEntry" end
+	if not Control.XPosition then Control.XPosition = 0 end
+	if not Control.YPosition then Control.YPosition = 0 end
+	XPosition = XPosition + Control.XPosition
+	YPosition = YPosition + Control.YPosition
+	GUI.Label(ScrollPanel, Control, XPosition, YPosition)
+	if not Control.Variable then Control.Variable = Control.Text end
+	if not Derama.ConfigTable[Control.Variable] then Derama.ConfigTable[Control.Variable] = "" end
+	local TextEntry = vgui.Create("DTextEntry", ScrollPanel)
+	TextEntry:SetSize(190, 20)
+	TextEntry:SetPos(XPosition, YPosition + 15)
+	TextEntry:SetUpdateOnType(true)
+	TextEntry:SetPaintedManually(true)
+	TextEntry:SetTextColor(Derama.ConfigTable["Misc.MenuText.colormixer"])
+	TextEntry:SetCursorColor(Derama.ConfigTable["Misc.MenuText.colormixer"])
+	TextEntry:SetHighlightColor(Derama.ConfigTable["Misc.MenuText.colormixer"])
+	TextEntry:SetPlaceholderColor(Derama.ConfigTable["Misc.MenuText.colormixer"])
+	TextEntry.OnValueChange = function(self, Value) Derama.ConfigTable[Control.Variable] = Value end
+	TextEntry.Paint = function(self, Width, Height)
+		self:SetValue(Derama.ConfigTable[Control.Variable])
+		if exodium:ButtonDown(Derama.ConfigTable["settings.menu.button"]) then self:FocusNext() end
+        DrawCustomRect(Derama.ConfigTable["Misc.Background.colormixer"],0, 0, Width, Height)
+        DrawCustomOutlinedRect(Derama.ConfigTable["Misc.OutlINES.colormixer"],0, 0, Width, Height)
+		draw.SimpleText(self:GetText(), "BetterDermaDefault", 5, Height / 2, Derama.ConfigTable["Misc.MenuText.colormixer"], TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+	end
+end
+
+local Menu = {
+	Frame = nil,
+	ListBackground = nil,
+	ActiveTab = nil
+}
+
+function GUI.Controls(ScrollPanel, Controls)
+	if Controls then
+		local XPosition = 5
+		local LeftYPosition = 0
+		local CenterYPosition = 0
+		local RightYPosition = 0
+		for Index, Control in ipairs(Controls) do
+			if not Control.Align or Control.Align == "Left" or (Control.Align ~= "Center" and Control.Align ~= "Right") then
+				XPosition = 5
+				if Control.Type == "Label" then
+					GUI.Label(ScrollPanel, Control, XPosition, LeftYPosition)
+				elseif Control.Type == "CheckBox" then
+					GUI.CheckBox(ScrollPanel, Control, XPosition, LeftYPosition)
+				elseif Control.Type == "Button" then
+					GUI.Button(ScrollPanel, Control, XPosition, LeftYPosition)
+					LeftYPosition = LeftYPosition + 5
+				elseif Control.Type == "Binder" then
+					GUI.Binder(ScrollPanel, Control, XPosition, LeftYPosition)
+					LeftYPosition = LeftYPosition + 20
+				elseif Control.Type == "ComboBox" then
+					GUI.ComboBox(ScrollPanel, Control, XPosition, LeftYPosition)
+					LeftYPosition = LeftYPosition + 20
+				elseif Control.Type == "Slider" then
+					LeftYPosition = LeftYPosition - 10
+					GUI.Slider(ScrollPanel, Control, XPosition, LeftYPosition)
+					LeftYPosition = LeftYPosition + 25
+				elseif Control.Type == "TextEntry" then
+					GUI.TextEntry(ScrollPanel, Control, XPosition, LeftYPosition)
+					LeftYPosition = LeftYPosition + 20
+				elseif Control.Type == "ColorMixer" then
+					GUI.ColorMixer(ScrollPanel, Control, XPosition + 175, LeftYPosition)
+				elseif Control.Type == "Decreser" then
+					LeftYPosition = LeftYPosition - (Control.Space or 40)
+				elseif Control.Type == "Increser" then
+					LeftYPosition = LeftYPosition + (Control.Space or 10)
+				elseif Control.Type == "ExtraPanel" then
+					GUI.ExtraPanel(ScrollPanel, Control, XPosition, LeftYPosition)
+				elseif Control.Type == "PlayerShowCase" then
+					GUI.PlayerShowCase(ScrollPanel, Control, XPosition, LeftYPosition)
+					LeftYPosition = LeftYPosition + 80
+				end
+
+				if Control.OverrideY ~= nil then LeftYPosition = LeftYPosition + Control.OverrideY end
+				LeftYPosition = LeftYPosition + 20
+			end
+
+			if Control.Align == "Center" then
+				XPosition = 205
+				if Control.Type == "Label" then
+					GUI.Label(ScrollPanel, Control, XPosition, CenterYPosition)
+				elseif Control.Type == "CheckBox" then
+					GUI.CheckBox(ScrollPanel, Control, XPosition, CenterYPosition)
+				elseif Control.Type == "Button" then
+					GUI.Button(ScrollPanel, Control, XPosition, CenterYPosition)
+					CenterYPosition = CenterYPosition + 5
+				elseif Control.Type == "Binder" then
+					GUI.Binder(ScrollPanel, Control, XPosition, CenterYPosition)
+					CenterYPosition = CenterYPosition + 20
+				elseif Control.Type == "ComboBox" then
+					GUI.ComboBox(ScrollPanel, Control, XPosition, CenterYPosition)
+					CenterYPosition = CenterYPosition + 20
+				elseif Control.Type == "Slider" then
+					CenterYPosition = CenterYPosition - 10
+					GUI.Slider(ScrollPanel, Control, XPosition, CenterYPosition)
+					CenterYPosition = CenterYPosition + 25
+				elseif Control.Type == "TextEntry" then
+					GUI.TextEntry(ScrollPanel, Control, XPosition, CenterYPosition)
+					CenterYPosition = CenterYPosition + 20
+				elseif Control.Type == "ColorMixer" then
+					GUI.ColorMixer(ScrollPanel, Control, XPosition + 175, CenterYPosition)
+				elseif Control.Type == "Decreser" then
+					CenterYPosition = CenterYPosition - (Control.Space or 40)
+				elseif Control.Type == "Increser" then
+					CenterYPosition = CenterYPosition + (Control.Space or 40)
+				elseif Control.Type == "ExtraPanel" then
+					GUI.ExtraPanel(ScrollPanel, Control, XPosition, CenterYPosition)
+				elseif Control.Type == "PlayerShowCase" then
+					GUI.PlayerShowCase(ScrollPanel, Control, XPosition, CenterYPosition)
+					CenterYPosition = CenterYPosition + 285
+				end
+
+				if Control.OverrideY ~= nil then CenterYPosition = CenterYPosition + Control.OverrideY end
+				CenterYPosition = CenterYPosition + 20
+			end
+
+			if Control.Align == "Right" then
+				XPosition = 405
+				if Control.Type == "Label" then
+					GUI.Label(ScrollPanel, Control, XPosition, RightYPosition)
+				elseif Control.Type == "CheckBox" then
+					GUI.CheckBox(ScrollPanel, Control, XPosition, RightYPosition)
+				elseif Control.Type == "Button" then
+					GUI.Button(ScrollPanel, Control, XPosition, RightYPosition)
+					RightYPosition = RightYPosition + 5
+				elseif Control.Type == "Binder" then
+					GUI.Binder(ScrollPanel, Control, XPosition, RightYPosition)
+					RightYPosition = RightYPosition + 20
+				elseif Control.Type == "ComboBox" then
+					GUI.ComboBox(ScrollPanel, Control, XPosition, RightYPosition)
+					RightYPosition = RightYPosition + 20
+				elseif Control.Type == "Slider" then
+					RightYPosition = RightYPosition - 10
+					GUI.Slider(ScrollPanel, Control, XPosition, RightYPosition)
+					RightYPosition = RightYPosition + 25
+				elseif Control.Type == "TextEntry" then
+					GUI.TextEntry(ScrollPanel, Control, XPosition, RightYPosition)
+					RightYPosition = RightYPosition + 20
+				elseif Control.Type == "ColorMixer" then
+					GUI.ColorMixer(ScrollPanel, Control, XPosition + 175, RightYPosition)
+				elseif Control.Type == "Decreser" then
+					RightYPosition = RightYPosition - (Control.Space or 40)
+				elseif Control.Type == "Increser" then
+					RightYPosition = RightYPosition + (Control.Space or 40)
+				elseif Control.Type == "ExtraPanel" then
+					GUI.ExtraPanel(ScrollPanel, Control, XPosition, RightYPosition)
+				elseif Control.Type == "PlayerShowCase" then
+					GUI.PlayerShowCase(ScrollPanel, Control, XPosition, RightYPosition)
+					RightYPosition = RightYPosition + 80
+				end
+
+				if Control.OverrideY ~= nil then RightYPosition = RightYPosition + Control.OverrideY end
+				RightYPosition = RightYPosition + 20
+			end
+		end
+	end
+end
+
+function Menu.LayoutControls(ScrollPanel, TabTitle) -- Mother of god ;-;
+	for Index, Tab in ipairs(Derama.LayoutTable) do
+		if Tab.Title == TabTitle then GUI.Controls(ScrollPanel, Tab.Controls) end
+	end
+end
+
+function Menu.Render()
+	if Menu.Frame then
+		Menu.Frame:SetVisible(not Menu.Frame:IsVisible())
+		Menu.ListBackground:SetVisible(not Menu.ListBackground:IsVisible())
+		return
+	end
+
+	Menu.Frame = vgui.Create("DFrame")
+	Menu.Frame:SetTitle("Exodium - Lite edition")
+	Menu.Frame:SetSize(640, 480)
+	Menu.Frame:Center()
+	Menu.Frame:MakePopup()
+	Menu.Frame:SetScreenLock(true)
+	Menu.Frame.lblTitle:SetVisible(false)
+	Menu.Frame.btnMinim:SetVisible(false)
+	Menu.Frame.btnMaxim:SetVisible(false)
+	Menu.Frame.btnClose:SetVisible(false)
+	Menu.Frame.Paint = function(self, Width, Height)
+		self:MoveToFront()
+        DrawCustomRect(Color(15, 15, 15, 255),0, 0, Width, 24)
+        DrawTexturedRect(gradientMatUp,Derama.ConfigTable["Misc.TitleBarsAndButtons.colormixer"],0, 0, Width, 24)
+        DrawCustomOutlinedRect(Derama.ConfigTable["Misc.OutlINES.colormixer"],0, 0, Width, 24)
+        DrawCustomRect(Derama.ConfigTable["Misc.MenuTransparency.colormixer"],0, 24, Width, Height - 24)
+        DrawTexturedRect(gradientMatUp,Color(15, 15, 15),0, 24, Width, Height - 24)
+        DrawCustomOutlinedRect(Derama.ConfigTable["Misc.OutlINES.colormixer"],0, 23, Width, Height - 23)
+		draw.SimpleTextOutlined(self:GetTitle(), "BetterDermaDefault", 640 / 2, 6, Derama.ConfigTable["Misc.MenuText.colormixer"], TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP, 1, Color(0, 0, 0, 255 / 3))
+	end
+
+	Menu.ListBackground = vgui.Create("DFrame")
+	Menu.ListBackground:SetTitle("")
+	Menu.ListBackground:SetPos(ScrH() + 330, 0)
+	Menu.ListBackground:SetSize(500, 400)
+	Menu.ListBackground:MakePopup()
+	Menu.ListBackground:ShowCloseButton(false)
+	Menu.ListBackground.lblTitle:SetVisible(false)
+	Menu.ListBackground.btnMinim:SetVisible(false)
+	Menu.ListBackground.btnMaxim:SetVisible(false)
+	Menu.ListBackground.btnClose:SetVisible(false)
+	Menu.ListBackground.Paint = function(self, w, h)
+        DrawCustomRect(Derama.ConfigTable["Misc.MenuTransparency.colormixer"],0, 0, w, h)
+		DrawTexturedRect(gradientMatUp, Color(0, 0, 0, 200), 0, 0, w, h)
+        DrawCustomOutlinedRect(Derama.ConfigTable["Misc.OutlINES.colormixer"],0, 0, w, h)
+        DrawCustomRect(Derama.ConfigTable["Misc.TitleBarsAndButtons.colormixer"],0, 0, w, 20)
+        DrawTexturedRect(gradientMatUp,Color(0, 0, 0, 200),0, 0, w, 20)
+        DrawCustomOutlinedRect(Derama.ConfigTable["Misc.OutlINES.colormixer"],0, 0, w, 20)
+		draw.SimpleTextOutlined("PlayerList", "BetterDermaDefault", 500 / 2, 3, Derama.ConfigTable["Misc.MenuText.colormixer"], TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP, 1, Color(0, 0, 0, 255 / 3))
+	end
+
+	local List = vgui.Create("DListView", Menu.ListBackground)
+	List:Dock(FILL)
+	List:DockMargin(0, 0, -15, 0)
+	List:SetMultiSelect(true)
+	local oldColumn = List.AddColumn
+	local oldLine = List.AddLine
+	List.PaintOver = function(self, w, h)
+		local bar = self.VBar
+		if IsValid(bar) then
+			bar.Paint = function(self, w, h)
+                DrawCustomRect(Derama.ConfigTable["Misc.OutlINES.colormixer"],0, 0, 1, h)
+			end
+
+			bar.btnGrip.Paint = function() return end
+			bar.btnUp.Paint = function() return end
+			bar.btnDown.Paint = function() return end
+		end
+	end
+
+    List.AddColumn = function(self, name, pos)
+        local Column = oldColumn(self, name, pos)
+        Column:SetFixedWidth(245)
+        local ColumnButton = Column:GetChildren()[1]
+        ColumnButton:SetCursor("arrow")
+        ColumnButton:SetTextColor(Derama.ConfigTable["Misc.MenuText.colormixer"])
+        ColumnButton:SetTextColor(Color(0, 0, 0, 0))
+        ColumnButton:SetFont("BetterDermaDefault")
+        ColumnButton.Paint = function(self, w, h)
+            DrawCustomRect(Derama.ConfigTable["Misc.TitleBarsAndButtons.colormixer"],1, 0, w, h)
+            DrawTexturedRect(gradientMatUp,Color(0, 0, 0, 200),0, 0, w, h)
+            DrawCustomOutlinedRect(Derama.ConfigTable["Misc.OutlINES.colormixer"],0, 0, w, h)
+            draw.SimpleTextOutlined(name, "BetterDermaDefault", w / 2, 1, Derama.ConfigTable["Misc.MenuText.colormixer"], TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP, 1, Color(0, 0, 0, 255 / 3))
+        end
+        return Column
+    end
+
+	List:AddColumn("Name")
+	List:AddColumn("SteamID64")
+
+	List.AddLine = function(self, ...)
+		local Line = oldLine(self, ...)
+		for _, v in ipairs(Line:GetChildren()) do
+			v:SetTextColor(Color(0, 0, 0, 0))
+			v:SetFont("BetterDermaDefault")
+			v.Paint = function(tfdoinamethis, w, h)
+				local text = tfdoinamethis:GetText()
+				local col = Derama.ConfigTable["Misc.MenuText.colormixer"]
+                
+				draw.SimpleTextOutlined(text, "BetterDermaDefault", w / 2, 1, col, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP, 1, Color(0, 0, 0, 255 / 3))
+			end
+		end
+
+		Line.Paint = function(self, w, h)
+			local Outlines = Derama.ConfigTable["Misc.OutlINES.colormixer"]
+			local mcum = Color(Outlines.r, Outlines.g, Outlines.b, Outlines.a)
+			if self:IsLineSelected() then mcum.a = mcum.a / 4 end
+            DrawCustomOutlinedRect(mcum,0, h, w - 15, 0)
+		end
+		return Line
+	end
+
+	List.Paint = function(self, w, h)
+        DrawCustomOutlinedRect(Derama.ConfigTable["Misc.OutlINES.colormixer"],0, 0, w - 15, h)
+	end
+    function Menu:Repopulate()
+        local playercache = player.GetAll()
+        for _, Victim in pairs(playercache) do
+            if Victim:Nick() ~= LPLY:Nick() then List:AddLine(Victim:Nick(),Victim:SteamID64()) end
+        end
+    end
+    Menu:Repopulate()
+
+    local RefreshButton = vgui.Create("DButton", Menu.ListBackground)
+    RefreshButton:Dock(BOTTOM)
+    RefreshButton:DockMargin(0, 4, 0, 0)
+    RefreshButton:SetText("")
+    RefreshButton.DoClick = function()
+        List:Clear()
+        Menu:Repopulate()
+    end
+
+    RefreshButton.Paint = function(self,w,h)
+        DrawCustomRect(Derama.ConfigTable["Misc.Background.colormixer"],0,0,w,h)
+        DrawCustomOutlinedRect(Derama.ConfigTable["Misc.OutlINES.colormixer"],0,0,w,h)
+        OriginalSurface_SetFont("BetterDermaDefault")
+        local tWidth,tHeight = OriginalSurfaceGetSize("Refresh")
+        draw.SimpleTextOutlined("Refresh", "BetterDermaDefault", (500 - tWidth) / 2 - 3, 3, Derama.ConfigTable["Misc.MenuText.colormixer"], TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP, 1, Color(0, 0, 0, 255 / 3))
+    end
+
+    List.DoDoubleClick = function(lst, index, pnl)
+        //if PlayerStorage[name] == true then exodium.Notifications("Player Added to the friendlist ") end
+        name = pnl:GetColumnText(1)
+        steamid = pnl:GetColumnText(2)
+        if not PlayerStorage[steamid] then
+            exodium.Notifications("Player( ".. name .." )".." Added to the Friend List") 
+        else
+            exodium.Notifications("Player( ".. name .." )".." Is Already in the Friend List") 
+            return
+        end
+        PlayerStorage[steamid] = true
+    end
+
+    List.OnRowRightClick = function(lst, index, pnl)
+        //if PlayerStorage[name] == true then exodium.Notifications("Player Removed from friendlist") end
+        if PlayerStorage[steamid] then 
+            exodium.Notifications("Player( ".. name .." )".. " Removed from Friend list") 
+        else
+            exodium.Notifications("Player( ".. name .." )".. " Is not in the Friend list") 
+            return
+        end
+        PlayerStorage[steamid] = false
+    end
+
+	local PropertySheet = vgui.Create("DPropertySheet", Menu.Frame)
+	PropertySheet.tabScroller:SetOverlap(1)
+	PropertySheet:Dock(FILL)
+	PropertySheet:DockMargin(0, 0, 0, 0)
+	PropertySheet:SetFadeTime(0)
+	local OriginalAddSheet = PropertySheet.AddSheet
+	PropertySheet.AddSheet = function(self, Label, Panel, Material, NoStretchX, NoStretchY, Tooltip)
+		local Sheet = OriginalAddSheet(self, Label, Panel, Material, NoStretchX, NoStretchY, Tooltip)
+		Sheet.Tab:SetTextColor(Color(0, 0, 0, 0))
+		Sheet.Tab.GetTabHeight = function(self) return 20 end
+		Sheet.Tab.ApplySchemeSettings = function(self)
+			local LeftMargin, TopMargin, RightMargin, BottomMargin = PropertySheet.tabScroller:GetDockMargin()
+			self:SetSize((PropertySheet:GetWide() - LeftMargin) / #PropertySheet:GetItems(), self:GetTabHeight())
+			DLabel.ApplySchemeSettings(self)
+		end
+
+		Sheet.Tab.Paint = function(self, Width, Height)
+			if self:GetText() == ActiveTab then
+				PropertySheet:SetActiveTab(self)
+				ActiveTab = nil
+			end
+
+            DrawCustomRect(Color(15, 15, 15, 255),1, 1, Width - 2, Height)
+            DrawCustomOutlinedRect(Derama.ConfigTable["Misc.OutlINES.colormixer"],0, 0, Width, Height)
+            local TabCol = Derama.ConfigTable["Misc.TitleBarsAndButtons.colormixer"]
+			if self:IsHovered() then
+				TabCol = Color(40, 40, 40) --niggaballs
+			end
+
+			if PropertySheet:GetActiveTab() == self then TabCol = Color(40, 40, 40) end
+            DrawTexturedRect(gradientMat,TabCol,1, 1, Width - 2, Height)
+
+			draw.SimpleTextOutlined(self:GetText(), "BetterDermaDefault", Width / 2, Height / 2, Derama.ConfigTable["Misc.MenuText.colormixer"], TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER, 1, Color(0, 0, 0, 255 / 3))
+		end
+		return Sheet
+	end
+
+	PropertySheet.Paint = function(self, Width, Height)
+        DrawCustomRect(Derama.ConfigTable["Misc.Background.colormixer"],0, 20, Width, Height - 20)
+        DrawCustomOutlinedRect(Derama.ConfigTable["Misc.OutlINES.colormixer"],0, 20, Width, Height - 20)
+	end
+
+	local AddSheet = function(Control)
+		local ScrollPanel = vgui.Create("DScrollPanel", PropertySheet)
+		ScrollPanel:Dock(FILL)
+		ScrollPanel:DockMargin(5, 10, 10, 10)
+		ScrollPanel.VBar.Paint = function(self, Width, Height)
+            DrawCustomRect(Color(40, 40, 40),0, 0, Width, Height)
+            DrawCustomOutlinedRect(Derama.ConfigTable["Misc.OutlINES.colormixer"],0, 0, Width, Height)
+		end
+
+		ScrollPanel.VBar.btnUp.Paint = function(self, Width, Height)
+            DrawCustomRect(Derama.ConfigTable["Misc.TitleBarsAndButtons.colormixer"],0, 0, Width, Height)
+            DrawTexturedRect(gradientMatUp,OutlinedCol, 0, 0, Width, Height)
+            DrawCustomOutlinedRect(Derama.ConfigTable["Misc.OutlINES.colormixer"],0, 0, Width, Height)
+		end
+
+		ScrollPanel.VBar.btnGrip.Paint = function(self, Width, Height)
+            DrawCustomRect(Derama.ConfigTable["Misc.TitleBarsAndButtons.colormixer"],0, 0, Width, Height)
+            DrawTexturedRect(gradientMatUp,OutlinedCol, 0, 0, Width, Height)
+			DisableClipping(true)
+            DrawCustomOutlinedRect(Derama.ConfigTable["Misc.OutlINES.colormixer"],0, 0, Width, Height + 1)
+			DisableClipping(false)
+		end
+
+		ScrollPanel.VBar.btnDown.Paint = function(self, Width, Height)
+            DrawCustomRect(Derama.ConfigTable["Misc.TitleBarsAndButtons.colormixer"],0, 0, Width, Height)
+            DrawTexturedRect(gradientMat,OutlinedCol, 0, 0, Width, Height)
+            DrawCustomOutlinedRect(Derama.ConfigTable["Misc.OutlINES.colormixer"],0, 0, Width, Height)
+		end
+
+		ScrollPanel.VBar.SetUp = function(self, BarSize, CanvasSize)
+			self.BarSize = BarSize
+			self.CanvasSize = API.Protected_G.math.max(CanvasSize - BarSize, 0.1)
+			self:DockMargin(0, 0, 0, 0)
+			self:SetEnabled(true)
+			self:InvalidateLayout()
+		end
+
+		PropertySheet:AddSheet(Control.Title, ScrollPanel)
+		Menu.LayoutControls(ScrollPanel, Control.Title)
+	end
+
+	for Index, Control in ipairs(Derama.LayoutTable) do
+		AddSheet(Control)
+	end
+end
+
+function Menu.Toggle()
+	if Util.IsButtonPressed(Derama.ConfigTable["settings.menu.button"]) then
+		Menu.Render()
+	end
+end
+
+function Menu.Destroy()
+	if Menu.Frame then
+		Menu.Frame:Remove()
+		Menu.Frame = nil
+	end
+end
+
+local function RefreshConfigs()
+	if not file.Exists(ConfigFolder, "DATA") then file.CreateDir(ConfigFolder) end
+	Derama.ConfigTable["settings.config.name"] = ""
+	Derama.ConfigTable["settings.config"] = {
+		Option = "",
+		Options = {}
+	}
+
+	local Configs = {}
+	local Files, Folders = file.Find(ConfigFolder .. "/*.vtf", "DATA")
+	for Index, File in ipairs(Files) do
+		File = exodium.Replace(File, "." .. ConfigFileExtension, "")
+		table.insert(Configs, File)
+	end
+
+	Derama.ConfigTable["settings.config"].Options = Configs
+end
+
+RefreshConfigs()
+local function Buttons()
+	Derama.ConfigTable["settings.unload"] = function()
+		API.Callbacks.Remove("Hook::CreateMove", "CMove")
+		API.Callbacks.Remove("Hook::PostRender", "PostRender")
+		API.Callbacks.Remove("Hook::FireBullets", "Nospread")
+        API.Callbacks.Remove("Hook::DoImpactEffect", "DoImpactEffect")
+		API.Callbacks.Remove("Hook::Call", "Hooks")
+        hook.Remove("CalcView", "Calc")
+		Menu.Frame:Remove()
+		Menu.Frame:SetMouseInputEnabled(false)
+		Menu.Frame:SetKeyboardInputEnabled(false)
+		Menu.ListBackground:Remove()
+		Menu.ListBackground:SetMouseInputEnabled(false)
+		Menu.ListBackground:SetKeyboardInputEnabled(false)
+	end
+
+	Derama.ConfigTable["settings.config.rename"] = function()
+		local Config = string.format("%s/%s.%s", ConfigFolder, Derama.ConfigTable["settings.config"].Option, ConfigFileExtension)
+		if Config ~= "Exodium/.vtf" and Derama.ConfigTable["settings.config.name"] ~= "" then exodium.Notifications("Config " .. "(" .. Derama.ConfigTable["settings.config"].Option .. ")" .. " Has been renamed to" .. "(" .. Derama.ConfigTable["settings.config.name"] .. ")") end
+		if not file.Exists(Config, "DATA") then return end
+		file.Rename(Config, string.format("%s/%s.%s", ConfigFolder, Derama.ConfigTable["settings.config.name"], ConfigFileExtension))
+		RefreshConfigs()
+	end
+
+	Derama.ConfigTable["settings.config.save"] = function()
+		if string.len(Derama.ConfigTable["settings.config.name"]) <= 0 then return end
+		if string.len(Derama.ConfigTable["settings.config.name"]) <= 0 then
+			return
+		else
+			exodium.Notifications("Config " .. "(" .. Derama.ConfigTable["settings.config.name"] .. ")" .. " Has been saved!")
+		end
+
+		file.Write(string.format("%s/%s.%s", ConfigFolder, Derama.ConfigTable["settings.config.name"], ConfigFileExtension), API.Protected_G.util.TableToJSON(Derama.ConfigTable))
+		RefreshConfigs()
+	end
+
+	Derama.ConfigTable["settings.config.load"] = function()
+		local Config = string.format("%s/%s.%s", ConfigFolder, Derama.ConfigTable["settings.config"].Option, ConfigFileExtension)
+		if not file.Exists(Config, "DATA") then return end
+		exodium.Notifications("Config " .. "(" .. Derama.ConfigTable["settings.config"].Option .. ")" .. " Has been loaded!")
+		Derama.ConfigTable = util.JSONToTable(file.Read(Config, "DATA"))
+		RefreshConfigs()
+		Buttons()
+	end
+
+	Derama.ConfigTable["settings.config.delete"] = function()
+		local Config = string.format("%s/%s.%s", ConfigFolder, Derama.ConfigTable["settings.config"].Option, ConfigFileExtension)
+		if Config ~= "Exodium/.vtf" then exodium.Notifications("Config " .. "(" .. Derama.ConfigTable["settings.config"].Option .. ")" .. " Has been removed!") end
+		if not file.Exists(Config, "DATA") then return end
+		file.Delete(Config)
+		RefreshConfigs()
+	end
+end
+
+function exodium:AlivCheck()
+    if not LPLY:Alive() then return true end
+end
+
+function exodium:WeaponCheck()
+    for k,v in pairs(IGNWP) do
+        if LPLY:GetActiveWeapon():GetClass() == k then return true end
+    end
+end
+
+function exodium:MovementTypeCheck()
+    for k, v in pairs(MOVIgnore) do
+		if LPLY:GetMoveType() == k then return true end
+	end
+end
+
+local function TIME_TO_TICKS(flTime)
+	return API.Protected_G.math.floor(0.5 + flTime / TICK_INTERVAL)
+end
+
+local function TICKS_TO_TIME(Tick)
+	return TICK_INTERVAL * Tick
+end
+
+local function RoundToTicks(flTime)
+	return TICK_INTERVAL * TIME_TO_TICKS(flTime)
+end
+
+function exodium.InScreen(player)
+	local ToScreenView = OriginalToScreen(OriginalGetPos(player))
+	return ToScreenView.x > 0 and ToScreenView.x < ScrW() and ToScreenView.y > 0 and ToScreenView.y < ScrH()
+end
+
+Buttons()
+for i = 1, 113 do
+	Derama.ConfigTable.WasKeyDown[i] = false
+	Derama.ConfigTable.IsDown[i] = false
+	Derama.ConfigTable.IsPressed[i] = false
+end
+
+function Aim.GetLerpAmmount()
+	local cl_interp = API.GetConVar("cl_interp"):GetFloat()
+	local cl_interp_ratio = API.GetConVar("cl_interp_ratio"):GetFloat()
+	local cl_interp_all = API.GetConVar("cl_interp_all"):GetFloat()
+	local sv_client_max_interp_ratio = API.GetConVar("sv_client_max_interp_ratio"):GetFloat()
+	local sv_client_min_interp_ratio = API.GetConVar("sv_client_min_interp_ratio"):GetFloat()
+	local cl_updaterate = API.GetConVar("cl_updaterate"):GetInt()
+	if cl_interp_ratio == 0 then cl_interp_ratio = 1 end
+	if sv_client_max_interp_ratio and sv_client_min_interp_ratio ~= 1 then cl_interp_ratio = exodium.Clamp(cl_interp_ratio, sv_client_min_interp_ratio, sv_client_max_interp_ratio) end
+	return API.Protected_G.math.max(cl_interp, cl_interp_ratio / cl_updaterate)
+end
+
+--[[
+
+Visual Functions
+
+]]
+local positions = {}
+local fuckyou = true
+
+function Visuals:DoImpactEffect(trace)
+    if not IsFirstTimePredicted() then return end
+    local vm = LPLY:GetViewModel()
+    local muzzle = vm:LookupAttachment("muzzle")
+    if muzzle == 0 then muzzle = vm:LookupAttachment("1") end
+    local wep = vm:GetAttachment(muzzle).Pos
+
+    local EntThatFired 
+    for k,v in pairs(ents.FindInSphere(trace.startpos, 10)) do
+        if v:IsPlayer() then
+            EntThatFired = v
+            if EntThatFired == LPLY then
+            end
+            break
+        end
+    end
+
+    if EntThatFired == LPLY then
+        table.insert(trace, wep)
+        table.insert(positions, trace)
+    end
+
+    API.Protected_G.timer.Simple(2, function()
+        table.remove(positions, #trace)
+    end)
+end
+
+local endPos 
+local startPos
+
+function Visuals.BulletTracers()
+	if not Derama.ConfigTable["Visuals.BulletTracers.combobox"] then return end
+
+    for k,v in pairs(positions) do
+        endPos = v["endpos"]
+        startPos = v[1]
+
+        cam_IgnoreZ( false )
+        Render_SetMaterial(Material(Derama.ConfigTable["Visuals.Bullet.Trace.Material.combobox"].Option))
+        Draw_Beam(startPos, endPos, Derama.ConfigTable["Visuals.bullet.size"], 5, 0, Derama.ConfigTable["Visuals.BulletTracers.Color.colormixer"])   
+    end
+end
+
+function Visuals:BulletImpacts()
+	if not Derama.ConfigTable["Visuals.HitPlace.CheckBox"] then return end
+
+    local something = Angle(0,0,0)
+    local BoxVec = Vector(2,2,2)
+    for k,v in pairs(positions) do
+        endPos = v["endpos"]       
+        Render_SetMaterial(Material("Color"))
+        Render_DrawBox(endPos, something, -BoxVec, BoxVec, Derama.ConfigTable["Visuals.HitPlace.colormixer"])
+    end
+end
+
+function Visuals.GetBounds(plr)
+	local origin = OriginalGetPos(plr)
+	local min, max = OriginalCollisionB(plr)
+	min = min + origin
+	max = max + origin
+	local points = {Vector(min.x, min.y, min.z), Vector(min.x, max.y, min.z), Vector(max.x, max.y, min.z), Vector(max.x, min.y, min.z), Vector(max.x, max.y, max.z), Vector(min.x, max.y, max.z), Vector(min.x, min.y, max.z), Vector(max.x, min.y, max.z)}
+    local BoundsToScreen = OriginalToScreen
+	local flb = BoundsToScreen(points[4])
+	local brt = BoundsToScreen(points[6])
+	local blb = BoundsToScreen(points[1])
+	local frt = BoundsToScreen(points[5])
+	local frb = BoundsToScreen(points[3])
+	local brb = BoundsToScreen(points[2])
+	local blt = BoundsToScreen(points[7])
+	local flt = BoundsToScreen(points[8])
+	local arr = {flb, brt, blb, frt, frb, brb, blt, flt}
+	local left = flb.x
+	local top = flb.y
+	local right = flb.x
+	local bottom = flb.y
+	for i = 1, 8 do
+		if arr[i] then
+			if left > arr[i].x then left = arr[i].x end
+			if bottom < arr[i].y then bottom = arr[i].y end
+			if right < arr[i].x then right = arr[i].x end
+			if top > arr[i].y then top = arr[i].y end
+		end
+	end
+
+	local bbox = {
+		x = 0,
+		y = 0,
+		w = 0,
+		h = 0
+	}
+
+	bbox.x = left
+	bbox.y = top
+	bbox.w = right - left
+	bbox.h = bottom - top
+	return bbox
+end
+
+function Visuals.PlayerWithinBounds(ply, target, dist)
+	local distSqr = dist * dist
+	return OriginalGetPos(LPLY):DistToSqr(OriginalGetPos(target)) > distSqr
+end
+
+function Visuals.ESPNSHIT()
+	if not Derama.ConfigTable["Visuals.EnableESP.checkbox"] then return end
+	local cum = player.GetAll()
+	for i = 1, #cum do
+		local v = cum[i]
+		if v == LPLY then continue end
+		if v:Alive() then
+			if not exodium.InScreen(v) then continue end
+			if v:IsDormant() then continue end
+			if Visuals.PlayerWithinBounds(LPLY, v, Derama.ConfigTable["Visuals.ESPDistance.slider"]) then continue end
+			if Derama.ConfigTable["Visuals.IgnoreBots.checkbox"] then if v:IsBot() then continue end end
+			if Derama.ConfigTable["Visuals.IgnoreTM8.checkbox"] then if LPLY:Team() == v:Team() then continue end end
+			if Derama.ConfigTable["Visuals.Ignorevch.checkbox"] then if v:InVehicle() then continue end end
+			if Derama.ConfigTable["Visuals.IgnoreBuildmode.checkbox"] then if v:GetNWBool("_Kyle_Buildmode") == true then continue end end
+			local HealthBarColor = Derama.ConfigTable["Visuals.HealthBar.colormixer"]
+			local FillBoxColor = Derama.ConfigTable["Visuals.FillBox.colormixer"]
+			local BoxColor = Derama.ConfigTable["Visuals.2DBox.colormixer"]
+			local nameColor = Derama.ConfigTable["Visuals.Name.colormixer"]
+			local jobColor = Derama.ConfigTable["Visuals.job.colormixer"]
+			local weaponColor = Derama.ConfigTable["Visuals.WeaponESP.colormixer"]
+			local UserGroupColor = Derama.ConfigTable["Visuals.UserGroup.colormixer"]
+			local lineColor = Derama.ConfigTable["Visuals.Line.colormixer"]
+			local armorColor = Derama.ConfigTable["Visuals.Armor.colormixer"]
+			local SkeletonColor = Derama.ConfigTable["Visuals.Skeleton.colormixer"]
+            if not Derama.ConfigTable["Visuals.ignorelocalplayer.checkbox"] then
+                if IsThirdPerson then
+                    if v == LPLY then BoxColor = Color(127, 0, 126) end
+                else
+                    if LPLY == v then continue end
+                end
+            else
+                if LPLY == v then continue end
+            end
+
+			local box = Visuals.GetBounds(v)
+			local x, y, w, h = box.x, box.y, box.w, box.h
+			w = API.Protected_G.math.max(w, 10)
+			h = API.Protected_G.math.max(h, 10)
+			if Derama.ConfigTable["Visuals.FillBox.checkbox"] then
+                DrawCustomRect(FillBoxColor,x, y, w, h, 1)
+			end
+
+			if Derama.ConfigTable["Visuals.Healthbar.checkbox"] then
+				local health = exodium.Clamp(h * v:Health() / v:GetMaxHealth(), 0, h)
+				local UCalc = exodium.Clamp(y, 0, y)
+				local P_Over = x - 4
+                DrawCustomRect(OutlinedCol,P_Over, UCalc - 1, 1, h + 2)
+                DrawCustomRect(HealthBarColor,P_Over, UCalc - 1, 1, health + 2)
+                DrawTexturedRect(gradientMatUp,OutlinedCol,P_Over, UCalc - 1, 1, health + 2)
+                DrawCustomOutlinedRect(OutlinedCol,P_Over - 1, UCalc - 1, 3, h + 2, 1)
+			end
+
+			if Derama.ConfigTable["Visuals.2DBox.checkbox"] then
+				if Derama.ConfigTable["Visuals.BoxTeam Color.checkbox"] then
+                    local TeamRawget = exodium:RawGet(team,"GetColor")
+				    local TeamColor = TeamRawget(OriginalTeamIndex(v))
+				    BoxColor = TeamColor
+				end
+				if Derama.ConfigTable["Visuals.BoxType.combobox"].Option == "Outlined" then
+					--Outside Line
+					DrawCustomOutlinedRect(OutlinedCol,x - 1, y - 1, w + 2, h + 2, 1)
+					--Inside Line
+                    DrawCustomOutlinedRect(OutlinedCol,x + 1, y + 1, w - 2, h - 2, 1)
+                    DrawCustomOutlinedRect(BoxColor,x, y, w, h, 1)
+				elseif Derama.ConfigTable["Visuals.BoxType.combobox"].Option == "not Outlined :(" then
+                    DrawCustomOutlinedRect(BoxColor,x, y, w, h, 1)
+				end
+			end
+
+			if Derama.ConfigTable["Visuals.Name.checkbox"] then
+				local vName = v:Nick()
+				draw.SimpleTextOutlined(vName, "x88FontESP", x + w / 2, y - 1, nameColor, TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM, 0, Color(0, 0, 0, 255))
+			end
+
+			if Derama.ConfigTable["Visuals.JobESP.checkbox"] then
+                local RAWTeamName = exodium:RawGet(team, "GetName")
+                
+				local y_Pos = y + h
+				--Job
+				if not Derama.ConfigTable["Visuals.WeaponESP.checkbox"] then
+					y_Pos = y + h + 1
+				else
+					y_Pos = y + h + 14
+				end
+
+				draw.SimpleTextOutlined(RAWTeamName(OriginalTeamIndex(v)), "x88FontESP", x + w / 2, y_Pos, jobColor, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP, 0, Color(0, 0, 0, 255))
+			end
+
+			if Derama.ConfigTable["Visuals.UserGroupESP.checkbox"] then
+				local GetUndetouredUserGroup = API.Detours.GetOriginalFunction("Entity", "GetNWString")
+				local Y_Pos_UserGroup = y + h
+				if not Derama.ConfigTable["Visuals.WeaponESP.checkbox"] and not Derama.ConfigTable["Visuals.JobESP.checkbox"] then Y_Pos_UserGroup = y + h + 1 end
+				if Derama.ConfigTable["Visuals.WeaponESP.checkbox"] and Derama.ConfigTable["Visuals.JobESP.checkbox"] then Y_Pos_UserGroup = y + h + 27 end
+				if not Derama.ConfigTable["Visuals.JobESP.checkbox"] and Derama.ConfigTable["Visuals.WeaponESP.checkbox"] then Y_Pos_UserGroup = y + h + 14 end
+				if not Derama.ConfigTable["Visuals.WeaponESP.checkbox"] and Derama.ConfigTable["Visuals.JobESP.checkbox"] then Y_Pos_UserGroup = y + h + 14 end
+				if not Derama.ConfigTable["Visuals.WeaponESP.checkbox"] and Derama.ConfigTable["Visuals.JobESP.checkbox"] then Y_Pos_UserGroup = y + h + 14 end
+				draw.SimpleTextOutlined(GetUndetouredUserGroup(v, "UserGroup", "user"), "x88FontESP", x + w / 2, Y_Pos_UserGroup, UserGroupColor, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP, 0, Color(0, 0, 0, 255))
+			end
+
+			if Derama.ConfigTable["Visuals.Line.checkbox"] then
+				local ca = OriginalToScreen(v:LocalToWorld(v:OBBCenter()))
+                DrawCustomLine(lineColor,ScrW() / 2, ScrH(), ca.x, ca.y)
+			end
+
+			if Derama.ConfigTable["Visuals.Armor.checkbox"] then
+				local pp_Pos = x - 3
+				if Derama.ConfigTable["Visuals.Healthbar.checkbox"] then
+					pp_Pos = x - 6
+				else
+					pp_Pos = x - 2
+				end
+
+				draw.SimpleTextOutlined(v:Armor(), "x88FontESP", pp_Pos, y + 12, armorColor, TEXT_ALIGN_RIGHT, TEXT_ALIGN_BOTTOM, 0, Color(0, 0, 0, 255))
+			end
+
+			if Derama.ConfigTable["Visuals.Skeleton.checkbox"] then
+                v:SetupBones()
+                for i = 0, v:GetBoneCount() - 1 do
+                    if !v:BoneHasFlag(v:GetBoneParent(i), BONE_USED_BY_HITBOX) or !v:BoneHasFlag(i, BONE_USED_BY_HITBOX) then continue end
+                    local ppos, pos = v:GetBoneMatrix(v:GetBoneParent(i)):GetTranslation():ToScreen(), v:GetBoneMatrix(i):GetTranslation():ToScreen()
+                        
+                    DrawCustomLine(Derama.ConfigTable["Visuals.Skeleton.colormixer"],ppos.x, ppos.y, pos.x, pos.y)
+                end
+			end
+
+			if Derama.ConfigTable["Visuals.WeaponESP.checkbox"] then
+                local OriginalActiveWeapon = API.Detours.GetOriginalFunction("Player", "GetActiveWeapon")
+				local WepName = nil
+				if exodium.IsValid(OriginalActiveWeapon(v)) then
+					WepName = language.GetPhrase(OriginalActiveWeapon(v):GetPrintName())
+				else
+					WepName = "Nothing"
+				end
+
+				draw.SimpleTextOutlined(WepName, "x88FontESP", x + w / 2, y + h + 1, weaponColor, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP, 0, Color(0, 0, 0, 255))
+			end
+
+			if PlayerStorage[v:SteamID64()] then draw.SimpleTextOutlined("Friend", "x88FontESP", x + w + 1, y + 13, Color(0, 255, 0), TEXT_ALIGN_LEFT, TEXT_ALIGN_BOTTOM, 0, Color(0, 0, 0, 255)) end
+		end
+	end
+end
+
+function Visuals.Chams()
+	if not Derama.ConfigTable["Visuals.Chams.checkbox"] then return end
+	local Chamscolor = Derama.ConfigTable["Visuals.Chams.colormixer"]
+	local GetPlayers2 = player.GetAll()
+	for i = 1, #GetPlayers2 do
+		local u = GetPlayers2[i]
+		if not u:Alive() then continue end
+		if u == LPLY then continue end
+		if u:IsDormant() == true then continue end
+		if Visuals.PlayerWithinBounds(LPLY, u, Derama.ConfigTable["Visuals.ESPDistance.slider"]) then continue end
+		if Derama.ConfigTable["Visuals.IgnoreBots.checkbox"] then if u:IsBot() then continue end end
+		if Derama.ConfigTable["Visuals.IgnoreTM8.checkbox"] then if LPLY:Team() == u:Team() then continue end end
+		if Derama.ConfigTable["Visuals.Ignorevch.checkbox"] then if u:InVehicle() then continue end end
+		if Derama.ConfigTable["Visuals.IgnoreBuildmode.checkbox"] then if u:GetNWBool("_Kyle_Buildmode") == true then continue end end
+		exodium:Start3D()
+		Render_SuppressEngineLighting(true)
+		Render_SetColorModulation(Chamscolor.r / 255, Chamscolor.g / 255, Chamscolor.b / 255)
+		Render_SetBlend(Chamscolor.a / 255)
+		Render_MaterialOverride(CustomMats[Derama.ConfigTable["Visuals.Chams.Material.combobox"].Option].vmat)
+		u:DrawModel()
+		cam_End3D()
+	end
+end
+
+function Visuals:FixChams()
+	Render_SetColorModulation(1, 1, 1)
+	Render_MaterialOverride(Material(""))
+	Render_SetBlend(1)
+	Render_SuppressEngineLighting(false)
+end
+
+function Visuals.WeaponChams()
+	if not Derama.ConfigTable["Visuals.Weapon.Chams.combobox"] then return end
+	local Color2 = Derama.ConfigTable["Visuals.Weapon.Chams.colormixer"]
+	Render_SuppressEngineLighting(true)
+	Render_SetColorModulation(Color2.r / 255, Color2.g / 255, Color2.b / 255)
+	Render_MaterialOverride(CustomMats[Derama.ConfigTable["Visuals.Weapon.Material.combobox"].Option].vmat)
+	Render_SetBlend(1)
+	Render_SetBlend(Color2.a / 255)
+end
+
+function Visuals.WeaponChams2()
+	if not Derama.ConfigTable["Visuals.Weapon.Chams.combobox"] then return end
+	Render_SetColorModulation(1, 1, 1)
+	Render_MaterialOverride(Material(""))
+	Render_SetBlend(1)
+	Render_SuppressEngineLighting(false)
+end
+
+function Visuals.ExodiumHUDS()
+	if not Derama.ConfigTable["Visuals.ExodiumHUDSEnable.combobox"] then return end
+	local Latency = API.NetChannel_GetLatency(1) + API.NetChannel_GetLatency(0) * 1000
+	local text = "Exodium | " .. LPLY:Name() .. " | " .. "Ping: " .. math.floor(Latency) .. " | ".. os.date("%X", os.time()) .. " | ".. "V3"
+	OriginalSurface_SetFont("NotificationsFont")
+	local width, height = OriginalSurfaceGetSize(text)
+	width = width + 18
+	local Center = cw - (width / 2)
+	local Height = hc - hc
+    local cWidth, height, fartcText
+	if Derama.ConfigTable["Visuals.ExodiumV3.combobox"] then
+		local PanelWidth = 200
+		DrawCustomRect(Derama.ConfigTable["Misc.MenuTransparency.colormixer"], ScrW() / PanelWidth, Height, PanelWidth, 35)
+	end
+
+	if Derama.ConfigTable["Visuals.FakeDucking.combobox"] then
+		if FakeDuck then
+			DrawCustomText(Color(0, 255, 0), 50, 565, "Fake Duck")
+		else
+			DrawCustomText(Color(255, 0, 0), 50, 565, "Fake Duck")
+		end
+	end
+
+	if Derama.ConfigTable["Visuals.SendPacket.combobox"] then		
+		if SendPacket then
+			DrawCustomText(Color(0, 255, 0), 50, 585, "SendPacket")
+		else
+			DrawCustomText(Color(255, 0, 0), 50, 585, "SendPacket")	
+		end
+	end
+
+	if Derama.ConfigTable["Aim.WaterMark.checkbox"] then
+		DrawCustomRect(Derama.ConfigTable["Misc.MenuTransparency.colormixer"], Center, Height, width, 35)
+		DrawTexturedRect(gradientMatUp, Color(15, 15, 15, 200), Center, Height, width, 35)
+		DrawCustomRect(Derama.ConfigTable["Misc.TitleBarsAndButtons.colormixer"], Center, Height, width, 3)
+		DrawCustomOutlinedRect(Derama.ConfigTable["Misc.OutlINES.colormixer"], Center, Height, width, 35)
+		DrawCustomText(Derama.ConfigTable["Misc.MenuText.colormixer"], Center + 10, Height + 11, text, "NotificationsFont")
+	end
+
+	if Derama.ConfigTable["Aim.crosshair.checkbox"] then
+		if exodium:ButtonDown(Derama.ConfigTable["Aim.binder"]) then 
+            local player = Aim:FetchPlayer()
+            if player == nil then return end
+            fartcText = player:Nick()
+            cWidth, height = OriginalSurfaceGetSize(fartcText)
+            cWidth = cWidth + 18
+            local cCenter = cw - (cWidth / 2)
+            local cHeight = hc
+            DrawCustomText(Derama.ConfigTable["Misc.crosshairDetails.colormixer"], cCenter + 10, cHeight + 11, fartcText, "NotificationsFont") 
+        end
+	end
+end
+
+API.Protected_G.gameevent.Listen("player_hurt")
+function Visuals.HitSoundsAndKillSounds(data)
+	if not Derama.ConfigTable["Visuals.HitSounds.CheckBox"] then return end
+	local attacker, health, id, victim = data.attacker, data.health, data.userid, Player(data.userid)
+	if victim == LPLY:UserID() then return end
+	if attacker == LPLY:UserID() then
+		local HitSound = Derama.ConfigTable["Visuals.HitSounds.combobox"]
+		OriginalSurface_PlaySound(HitSound)
+		exodium.Notifications("Damaged " .. victim:Name(), Derama.ConfigTable["Misc.TitleBarsAndButtons.colormixer"])
+	end
+
+	if attacker == LPLY:UserID() and health <= 0 then
+		local KillSound = Derama.ConfigTable["Visuals.KillSounds.combobox"]
+		OriginalSurface_PlaySound(KillSound)
+		exodium.Notifications("Killed " .. victim:Name(), Derama.ConfigTable["Misc.TitleBarsAndButtons.colormixer"])
+	end
+end
+
+function Visuals:FindSkyboxes()
+	local SkyFind = file.Find("materials/skybox/*", "GAME")
+	for k, v in pairs(SkyFind) do
+		local name = exodium.StripExtension(v)
+		if not name:find("ft$") then continue end
+		name = name:Trim():gsub("ft$", "")
+		if name:find("_?hdr_?$") then continue end
+		if name:find("_ldr$") then continue end
+		table.insert(Derama.ConfigTable["Visuals.Skybox.ComboBox"].Options, name)
+	end
+end
+
+Visuals:FindSkyboxes()
+local SourceSkyname = API.GetConVar("sv_skyname"):GetString()
+local SourceSkyPre = {"lf", "ft", "rt", "bk", "dn", "up"}
+local mrskybox = {Material("skybox/" .. SourceSkyname .. "lf"), Material("skybox/" .. SourceSkyname .. "ft"), Material("skybox/" .. SourceSkyname .. "rt"), Material("skybox/" .. SourceSkyname .. "bk"), Material("skybox/" .. SourceSkyname .. "dn"), Material("skybox/" .. SourceSkyname .. "up")}
+function Visuals.SkyBoxChanger()
+	if not Derama.ConfigTable["Visuals.Skybox.Changer.combobox"] then return end
+	for k, v in pairs(Derama.ConfigTable["Visuals.Skybox.ComboBox"]) do
+		if Derama.ConfigTable["Visuals.Skybox.ComboBox"].Option == v then
+			local L_2_ = "skybox/" .. v
+			if not Derama.ConfigTable["Visuals.Skybox.Changer.combobox"] then L_2_ = SourceSkyname end
+			local L_1_, L_3_, L_4_ = GetConVar("sv_skyname"):GetString(), "$basetexture", Material
+			L_4_("skybox/" .. L_1_ .. "lf"):SetTexture(L_3_, L_4_(L_2_ .. "lf"):GetTexture(L_3_))
+			L_4_("skybox/" .. L_1_ .. "ft"):SetTexture(L_3_, L_4_(L_2_ .. "ft"):GetTexture(L_3_))
+			L_4_("skybox/" .. L_1_ .. "rt"):SetTexture(L_3_, L_4_(L_2_ .. "rt"):GetTexture(L_3_))
+			L_4_("skybox/" .. L_1_ .. "bk"):SetTexture(L_3_, L_4_(L_2_ .. "bk"):GetTexture(L_3_))
+			L_4_("skybox/" .. L_1_ .. "dn"):SetTexture(L_3_, L_4_(L_2_ .. "dn"):GetTexture(L_3_))
+			L_4_("skybox/" .. L_1_ .. "up"):SetTexture(L_3_, L_4_(L_2_ .. "up"):GetTexture(L_3_))
+		end
+	end
+end
+
+local prevSkyColor = Vector(255, 255, 255) * (1 / 255)
+local WasEnabled = false
+function Visuals.SkyboxColorChanger()
+	local CheckyBox = Derama.ConfigTable["Visuals.skycolor.combobox"]
+	local col10 = Derama.ConfigTable["Visuals.Sky.ColorModulation.colormixer"]
+	local newColor = CheckyBox and Vector(col10.r, col10.g, col10.b) * (1 / 255) or Vector(255, 255, 255) * (1 / 255)
+	if CheckyBox ~= WasEnabled or newColor ~= prevSkyColor then
+		for i = 1, 6 do
+			mrskybox[i]:SetVector("$color", newColor)
+		end
+
+		WasEnabled = CheckyBox
+		prevSkyColor = newColor
+	end
+end
+
+function Visuals.UseLessShit()
+	if not Derama.ConfigTable["Visuals.FakeShit.combobox"] then
+	    exodium:RunCommand("r_3dsky", 1)
+		return
+	end
+	exodium:RunCommand("r_3dsky", 0)
+end
+
+--[[
+
+Aim functions
+
+]]
+
+NS = NS or {}
+do
+	local META = {
+		m_iv = {},
+	}
+
+	META.__index = META
+	META.__tostring = function(self) return "UniformRandomStream [" .. self.m_idum .. "]" end
+	function UniformRandomStream(seed)
+		local obj = API.Protected_G.setmetatable({}, META)
+		obj:SetSeed(tonumber(seed) or 0)
+		return obj
+	end
+
+	-- https://github.com/VSES/SourceEngine2007/blob/master/src_main/vstdlib/random.cpp#L16
+	local IA = 16807
+	local IM = 2147483647
+	local IQ = 127773
+	local IR = 2836
+	local NTAB = 32
+	local NDIV = 1 + (IM - 1) / NTAB
+	local MAX_RANDOM_RANGE = 0x7FFFFFFF
+	-- fran1 -- return a random floating-point number on the interval [0,1])
+	local AM = 1 / IM
+	local EPS = 1.2e-7
+	local RNMX = 1 - EPS
+	function META:SetSeed(iSeed)
+		self.m_idum = iSeed < 0 and iSeed or -iSeed
+		self.m_iy = 0
+	end
+
+	local int = math.floor
+	function META:GenerateRandomNumber()
+		local j, k
+		if self.m_idum <= 0 or not self.m_iy then
+			if -self.m_idum < 1 then
+				self.m_idum = 1
+			else
+				self.m_idum = -self.m_idum
+			end
+
+			j = NTAB + 8
+			while 1 do
+				if j <= 0 then break end
+				j = j - 1
+				k = int(self.m_idum / IQ)
+				self.m_idum = int(IA * (self.m_idum - k * IQ) - IR * k)
+				if self.m_idum < 0 then self.m_idum = int(self.m_idum + IM) end
+				if j < NTAB then self.m_iv[j] = int(self.m_idum) end
+			end
+
+			self.m_iy = self.m_iv[0]
+		end
+
+		k = int(self.m_idum / IQ)
+		self.m_idum = int(IA * (self.m_idum - k * IQ) - IR * k)
+		if self.m_idum < 0 then self.m_idum = int(self.m_idum + IM) end
+		j = int(self.m_iy / NDIV)
+		-- We're seeing some strange memory corruption in the contents of s_pUniformStream. 
+		-- Perhaps it's being caused by something writing past the end of this array? 
+		-- Bounds-check in release to see if that's the case.
+		if j >= NTAB or j < 0 then
+			ErrorNoHalt(string.format("CUniformRandomStream had an array overrun: tried to write to element %d of 0..31.", j))
+			j = int(bit.band(j % NTAB, 0x7fffffff))
+		end
+
+		self.m_iy = int(self.m_iv[j])
+		self.m_iv[j] = int(self.m_idum)
+		return self.m_iy
+	end
+
+	function META:RandomFloat(flLow, flHigh)
+		flLow = flLow or 0
+		flHigh = flHigh or 1
+		local fl = AM * self:GenerateRandomNumber()
+		if fl > RNMX then fl = RNMX end
+		return (fl * (flHigh - flLow)) + flLow -- float in [low,high]
+	end
+
+	function META:RandomFloatExp(flMinVal, flMaxVal, flExponent)
+		flMinVal = flMinVal or 0
+		flMaxVal = flMaxVal or 1
+		flExponent = flExponent or 1
+		local fl = AM * self:GenerateRandomNumber()
+		fl = math.min(fl, RNMX)
+		if flExponent ~= 1 then fl = math.pow(fl, flExponent) end
+		return (fl * (flMaxVal - flMinVal)) + flMinVal
+	end
+
+	function META:RandomInt(iLow, iHigh)
+		iLow = iLow or 0
+		iHigh = iHigh or 100
+		iLow = math.floor(iLow)
+		iHigh = math.floor(iHigh)
+		local iMaxAcceptable, n
+		local x = iHigh - iLow + 1
+		if x <= 1 or MAX_RANDOM_RANGE < x - 1 then return iLow end
+		iMaxAcceptable = math.floor(MAX_RANDOM_RANGE - ((MAX_RANDOM_RANGE + 1) % x))
+		n = self:GenerateRandomNumber()
+		while n > iMaxAcceptable do
+			n = self:GenerateRandomNumber()
+		end
+		return iLow + (n % x)
+	end
+end
+
+-- s0lame 
+NS.wepcone = {
+	["weapon_smg1"] = {0.04362, 0.04362},
+	["weapon_ar2"] = {0.02618, 0.02618},
+	["weapon_shotgun"] = {0.08716, 0.08716},
+	["weapon_pistol"] = {0.00873, 0.00873}
+}
+
+NS.HOMONOVUS = {}
+local rand = UniformRandomStream()
+local ai_shot_bias_min = GetConVar"ai_shot_bias_min"
+local ai_shot_bias_max = GetConVar"ai_shot_bias_max"
+for iSeed = 0, 255 do
+	rand:SetSeed(iSeed)
+	local x, y, z = 0, 0, 0
+	local bias = 1
+	local shotBiasMin = ai_shot_bias_min:GetFloat()
+	local shotBiasMax = ai_shot_bias_max:GetFloat()
+	local shotBias = ((shotBiasMax - shotBiasMin) * bias) + shotBiasMin
+	local flatness = math.abs(shotBias) * 0.5
+	repeat
+		x = rand:RandomFloat(-1, 1) * flatness + rand:RandomFloat(-1, 1) * (1 - flatness)
+		y = rand:RandomFloat(-1, 1) * flatness + rand:RandomFloat(-1, 1) * (1 - flatness)
+		if shotBias < 0 then
+			x = (x >= 0) and 1.0 - x or -1.0 - x
+			y = (y >= 0) and 1.0 - y or -1.0 - y
+		end
+
+		z = (x * x) + (y * y)
+	until z <= 1
+
+	NS.HOMONOVUS[iSeed] = {x, y, z}
+end
+
+function RemapClamped(val, A, B, C, D)
+	if A == B then return val >= B and D or C end
+	local cVal = (val - A) / (B - A)
+	cVal = exodium.Clamp(cVal, 0.0, 1.0)
+	return C + (D - C) * cVal
+end
+
+function NS:GetWeaponBase(wep)
+	if not wep.Base then return "" end
+	return string.Split(string.lower(wep.Base), "_")[1]
+end
+
+function NS:CalculateSpread(cmd, wep, ang)
+	local class = wep:GetClass()
+	local cone = NS.wepcone[class]
+	local CommandNum = CUserCmd_CommandNumber(cmd)
+	local ActiveWep = LPLY:GetActiveWeapon()
+	if not cone then return ang end
+	if class == "weapon_pistol" then
+		local ramp = RemapClamped(wep:GetInternalVariable("m_flAccuracyPenalty"), 0, 1.5, 0, 1)
+		cone = LerpVector(ramp, Vector(0.00873, 0.00873, 0.00873), Vector(0.05234, 0.05234, 0.05234))
+	end
+
+	if weapons.IsBasedOn(class, "bobs_gun_base") then
+		if wep:GetIronsights() or CUserCmd_KeyDown(cmd, IN_ATTACK2) then
+			cone = Vector(wep.Primary.IronAccuracy, wep.Primary.IronAccuracy, 0)
+		else
+			cone = Vector(wep.Primary.Spread, wep.Primary.Spread, 0)
+		end
+	end
+
+	if NS:GetWeaponBase(wep) == "cw" or NS:GetWeaponBase(wep) == "swb" then
+		if NS:GetWeaponBase(wep) == "swb" then
+			cone = wep.HipSpread
+			if wep.dt.State == SWB_AIMING then cone = wep.AimSpread end
+		else
+			cone = wep.CurCone
+		end
+
+		if LPLY:Crouching() then cone = cone * 0.85 end
+		API.Protected_G.math.randomseed(CommandNum)
+		ang = ang + Angle(exodium.Rand(cone, -cone), exodium.Rand(cone, -cone), 0) * 25
+		return ang
+	end
+
+	if NS:GetWeaponBase(wep) == "arccw" then -- from zenith :-)
+		local Towards = ang:Forward()
+		local Seed1 = ActiveWep:GetBurstCount()
+		local Seed2 = not game.SinglePlayer() and CommandNum or CurTime()
+		local Spread = ArcCW.MOAToAcc * ActiveWep:GetBuff("AccuracyMOA")
+		local Dispersion = ActiveWep:GetDispersion() * ArcCW.MOAToAcc / 10
+		local RandomSeed = util.SharedRandom(Seed1, -1337, 1337, Seed2) * (ActiveWep:EntIndex() % 30241)
+		local desync = arccw_desync:GetBool()
+		local desyncnum = (desync and math.random()) or 0
+		math.randomseed(math.Round(RandomSeed) + desyncnum)
+		ActiveWep:ApplyRandomSpread(Towards, Dispersion * -1)
+		local RandomSeed2 = util.SharedRandom(1, -1337, 1337, Seed2) * (ActiveWep:EntIndex() % 30241)
+		math.randomseed(math.Round(RandomSeed2) + desyncnum)
+		ActiveWep:ApplyRandomSpread(Towards, Spread * -1)
+		ang = Towards:Angle()
+		ang:Normalize()
+		return ang
+	end
+
+	--[[
+    if NS:GetWeaponBase(wep) == "perpheads" then  //work in progress
+        print("yes nigga")
+	    local percmaxlevel = 0.85 + Either(wep:Crouching(), .1, 0)
+        local plyspeed = wep:GetVelocity():Length()
+
+        cone = wep.SightsKick
+        cone[1] = cone[1] / 60
+        cone[2] = cone[2] / 60
+        local basePrecision = cone[1]
+        cone = cone[2] + ((cone[1] - cone[2]) * (1-percmaxlevel))
+        local precisionoffset = cone + plyspeed/80 + Either(self:IsOwnerOnGround(), 0, 2) + (1-ironSights)*4
+        //local prec = util.SharedRandom("PrecisionOffset", -precisionoffset, precisionoffset)
+        print(prec)
+        ang = ang + Angle(precisionoffset[1], precisionoffset[2], 0)
+        return ang
+    end
+    ]]
+	--[[  in zaaaaaaaaaaa feature :-)
+    if NS:GetWeaponBase(wep) == "arc9" then
+        cone = wep.Spread
+        if not wep:GetInSights() and wep:GetValue("EFTHipFireSpreadBonus") then
+            cone = cone - wep.SpreadAddHipFire * 0.5
+        end
+        local seed = wep:GetProcessedValue("RecoilSeed", true) or wep:GetClass()
+        if isstring(seed) then
+            local numseed = 0
+
+            for _, i in ipairs(string.ToTable(seed)) do
+                numseed = numseed + string.byte(i)
+            end
+
+            numseed = numseed % 16777216
+
+            seed = numseed
+        end
+        API.Protected_G.math.randomseed(seed)
+        ang = ang + Angle(API.Protected_G.math.Rand(cone, -cone), API.Protected_G.math.Rand(-cone, cone), 0)
+        return ang
+    end
+    ]]
+	local seed = API.UserCmd.GetRandomSeed(cmd)
+	local x, y = NS.HOMONOVUS[seed][1], NS.HOMONOVUS[seed][2]
+	local forward, right, up = ang:Forward(), ang:Right(), ang:Up()
+	local RetVec = forward + (x * cone[1] * right * -1) + (y * cone[2] * up * -1)
+	local spreadAngles = RetVec:Angle()
+	spreadAngles:Normalize()
+	return spreadAngles
+end
+
+function Aim.Triggerbot(cmd)
+	if not Derama.ConfigTable["Aim.TriggerBot.checkbox"] then return end
+	if exodium:ButtonDown(Derama.ConfigTable["Aim.Triggerbot.binder"]) then if LPLY:GetEyeTrace().Entity:IsPlayer() then OriginalAddKey(cmd, IN_ATTACK) end end
+end
+
+local function GetAngleDiffrence(from, hey)
+	local ang, aim
+	ang = from:Forward()
+	aim = to:Forward()
+	return API.Protected_G.math.deg(API.Protected_G.math.acos(aim:Dot(ang) / aim:LengthSqr()))
+end
+
+function Aim.FovRad()
+	local fov = Derama.ConfigTable["Aim.Fov.slider"]
+	local screenFovFactor = math.tan(math.rad(fov / 2))
+	local radius = hc * screenFovFactor
+	return radius
+end
+
+local Fill = {
+	x = 200,
+	y = 200
+}
+
+local function DrawCircleOutline(x, y, radius, segments, color)
+	segments = segments or 64
+	local prevX, prevY
+	for i = 0, segments do
+		local angle = math.rad((i / segments) * 360)
+		local cx = x + math.cos(angle) * radius
+		local cy = y + math.sin(angle) * radius
+		if i > 0 then DrawCustomLine(color,prevX, prevY, cx, cy) end
+		prevX, prevY = cx, cy
+	end
+end
+
+local function DrawThickCircle(x, y, radius, thickness, segments, color)
+	thickness = thickness or 1
+	for i = -math.floor(thickness / 2), math.floor(thickness / 2) do
+		for j = -math.floor(thickness / 2), math.floor(thickness / 2) do
+			DrawCircleOutline(x + i, y + j, radius, segments, color)
+		end
+	end
+end
+
+function Aim.AimbotFov()
+	if not Derama.ConfigTable["Aim.Aimbot.checkbox"] then return end
+	if Derama.ConfigTable["Aim.Aimbot.fovCircleColor.checkbox"] then
+		local radius = Aim.FovRad()
+		DrawThickCircle(cw, hc, Aim.FovRad(), 3, 128, Color(0, 0, 0, 255))
+		DrawThickCircle(cw, hc, Aim.FovRad(), 1, 128, Derama.ConfigTable["Aim.fovCircleColor.colormixer"])
+	end
+end
+
+local function isPointInCircle(x, y, cirx, ciry, cirrad)
+	local dx, dy = x - cirx, y - ciry
+	return (dx * dx + dy * dy) <= (cirrad * cirrad)
+end
+
+--x88 pasted :-)
+local function FixMovement(cmd, aWishDir) --pasteeeeeeeeeeeeeeeeeeeeeed
+	local factor = 1
+	if CUserCmd_KeyDown(cmd, IN_SPEED) then factor = factor * 0.5 end
+	local aRealDir = CUserCmd_GetViewAngles(cmd)
+	aRealDir:Normalize()
+	local vRealF = aRealDir:Forward()
+	local vRealR = aRealDir:Right()
+	vRealF.z = 0
+	vRealR.z = 0
+	vRealF:Normalize()
+	vRealR:Normalize()
+	aWishDir:Normalize()
+	local vWishF = aWishDir:Forward()
+	local vWishR = aWishDir:Right()
+	vWishF.z = 0
+	vWishR.z = 0
+	vWishF:Normalize()
+	vWishR:Normalize()
+	local forwardmove = CUserCmd_GetForwardMove(cmd) * factor
+	local sidemove = CUserCmd_GetSideMove(cmd) * factor
+	local upmove = CUserCmd_GetUpMove(cmd) * factor
+	local vWishVel = vWishF * forwardmove + vWishR * sidemove
+	vWishVel.z = vWishVel.z + upmove
+	local a, b, c, d, e, f = vRealF.x, vRealR.x, vRealF.y, vRealR.y, vRealF.z, vRealR.z
+	local u, v, w = vWishVel.x, vWishVel.y, vWishVel.z
+	local flDivide = (b * c - a * d) * factor
+	local x = -(d * u - b * v) / flDivide
+	local y = (c * u - a * v) / flDivide
+	local z = (a * (f * v - d * w) + b * (c * w - e * v) + u * (d * e - c * f)) / flDivide
+	x = exodium.Clamp(x, -10000, 10000)
+	y = exodium.Clamp(y, -10000, 10000)
+	z = exodium.Clamp(z, -10000, 10000)
+	CUserCmd_SetForwardMove(cmd,x)
+	CUserCmd_SetSideMove(cmd, y)
+	CustomSetUpMove(cmd, z)
+end
+
+-- S0LUM pCODENZ INCOMING:
+--[[
+CROSSBOW: (no drag, constant speed)
+v0 = 3500
+Drop = 3500
+
+SMG NADE: (this has drag. you need a more advanced solver for this)
+v0 = 1000~
+dropSpeed = 265~
+
+
+
+
+
+BTW:
+Crossbow does not apply damage to the player/entities PREDICTED aabb (affected by lerp)
+Crossbow instead applies damage to the NON PREDICTED (network) aabb
+
+When aiming with any kind of weapon which fires a physics entity (crossbow bolt), you want to aim at the NON PREDICTED aabb
+
+NON-PREDICTED (not affected by lerp):
+Entity:GetAbsVelocity()
+Entity:GetNetworkOrigin()
+
+PREDICTED (affected by lerp):
+Entity:GetVelocity()
+Entity:GetPos()
+]]
+SOLUMISVERYAWESOMEANDSMART = SOLUMISVERYAWESOMEANDSMART or {}
+SOLUMISVERYAWESOMEANDSMART.SV_MAXVEL = API.GetConVar("sv_maxvelocity"):GetFloat()
+SOLUMISVERYAWESOMEANDSMART.SV_GRAVITY = API.GetConVar("sv_gravity"):GetFloat()
+SOLUMISVERYAWESOMEANDSMART.SV_FRICTION = API.GetConVar("sv_friction"):GetFloat()
+SOLUMISVERYAWESOMEANDSMART.SV_AIRACCELERATE = API.GetConVar("sv_airaccelerate"):GetFloat()
+SOLUMISVERYAWESOMEANDSMART.SV_ACCELERATE = API.GetConVar("sv_accelerate"):GetFloat()
+SOLUMISVERYAWESOMEANDSMART.SV_STOPSPEED = API.GetConVar("sv_stopspeed"):GetFloat()
+SOLUMISVERYAWESOMEANDSMART.DEVELOPER = API.GetConVar("developer"):GetBool()
+local STEPTIME = TICK_INTERVAL
+local vecOrigin = Vector(0, 0, 0)
+function SOLUMISVERYAWESOMEANDSMART:EstimateServerArriveTick()
+	local nTick = self:TimeToTick(API.NetChannel_GetLatency(1) + API.NetChannel_GetLatency(0)) -- LPLY:Ping() IS NOT ACCURATE!!! REPLACE WITH MODULE'S ALTERNATIVE
+	return nTick
+end
+
+function SOLUMISVERYAWESOMEANDSMART:TimeToTick(time)
+	return API.Protected_G.math.floor(0.5 + (time / STEPTIME))
+end
+
+function SOLUMISVERYAWESOMEANDSMART:TickToTime(tick)
+	return STEPTIME * tick
+end
+
+function SOLUMISVERYAWESOMEANDSMART:TravelTime(dist, v0, pitch)
+	return dist / (API.Protected_G.math.cos(pitch) * v0)
+end
+
+function SOLUMISVERYAWESOMEANDSMART:GetLobPitch(distLength, distLengthZ, v0, g) -- (targetpos - shootpos):Length2D(), targetpos.z - shootpos.z, inital vel, grav
+	local root = v0 * v0 * v0 * v0 - g * (g * distLength * distLength + 2.0 * distLengthZ * v0 * v0)
+	if root < 0 then return 180 end
+	root = root ^ 0.5
+	return API.Protected_G.math.atan(((v0 * v0) - root) / (g * distLength))
+end
+
+function SOLUMISVERYAWESOMEANDSMART:Uninterpolate(ent, pos)
+	if not ent.GetNetworkOrigin then return pos end
+	pos = ent:GetNetworkOrigin() + (pos - ent:GetPos())
+	return pos
+end
+
+function SOLUMISVERYAWESOMEANDSMART:Extrapolate(shootPos, targetPos, target, v0)
+	local tvel = target:GetAbsVelocity()
+	local onGround = target:IsOnGround()
+	local grav = self.SV_GRAVITY
+	local gravperTick = grav * TICK_INTERVAL
+	tvel.z = not onGround and tvel.z - gravperTick or tvel.z
+	tvel.z = exodium.Clamp(tvel.z, -self.SV_MAXVEL, self.SV_MAXVEL)
+	local dist = targetPos:Distance(shootPos)
+	local comptime = (dist / v0) + self:TickToTime(self:EstimateServerArriveTick())
+	local final = targetPos + (tvel * comptime)
+	return final
+end
+
+function SOLUMISVERYAWESOMEANDSMART:VelocityAfterGravity(ent, vel, ticks)
+	local bIsOnGround = ent:IsOnGround()
+	local entGravity = ent:GetGravity() == 0 and 1 or ent:GetGravity()
+	if not bIsOnGround and ent:GetMoveType() ~= MOVETYPE_NOCLIP then
+		vel.z = vel.z - (entGravity * self.SV_GRAVITY * 0.5 * STEPTIME * ticks)
+		vel.z = vel.z + (ent:GetBaseVelocity().z * STEPTIME * ticks)
+		vel.z = exodium.Clamp(vel.z, -self.SV_MAXVEL, self.SV_MAXVEL)
+		return vel * STEPTIME * ticks
+	else
+		return vel * STEPTIME * ticks
+	end
+end
+
+function SOLUMISVERYAWESOMEANDSMART:GetPredictedShootPos(ent)
+	local shootPos = ent:GetShootPos()
+	local vel = ent:GetVelocity()
+	local velfix = self:VelocityAfterGravity(ent, vel, 1)
+	shootPos = shootPos + vel * STEPTIME
+	return shootPos
+end
+
+local tResult = {}
+function SOLUMISVERYAWESOMEANDSMART:SolveProjectile(target, targetPos, shootPos, v0)
+	local data = {
+		m_flCompTime = self:TickToTime(self:EstimateServerArriveTick()),
+		m_flGravity = self.SV_GRAVITY * 0.05
+	}
+
+	local maxvel = self.SV_MAXVEL
+	local FINALPOS
+	local TIME = 0
+	local PITCH = 0
+	local PREDPOS = targetPos
+	local ORIGIN = target:GetNetworkOrigin()
+	local gravTime = self.SV_GRAVITY * STEPTIME
+	local mins, maxs = target:OBBMins(), target:OBBMaxs()
+	local targetVel = target:GetAbsVelocity()
+	local offset = targetPos - ORIGIN
+	local tData = {
+		output = tResult,
+		mask = MASK_SHOT,
+		filter = {target},
+		mins = mins,
+		maxs = maxs
+	}
+
+	while TIME < 10 do
+		targetVel.z = (target:GetMoveType() ~= MOVETYPE_NOCLIP and not target:IsOnGround()) and targetVel.z - gravTime or targetVel.z
+		targetVel.z = exodium.Clamp(targetVel.z, -maxvel, maxvel)
+		local NEXTPOS = PREDPOS + (targetVel * STEPTIME)
+		tData.start = PREDPOS
+		tData.endpos = NEXTPOS - offset
+		util.TraceHull(tData)
+		local vFloorNormal = tResult.HitNormal
+		local absHitNormZ = API.Protected_G.math.abs(vFloorNormal:Dot(Vector(0, 0, 1)))
+		NEXTPOS = absHitNormZ >= 0.7 and tResult.HitPos + offset or NEXTPOS
+		if self.DEVELOPER then
+			local col = HSVToColor(TIME * 180 % 360, 1, 1)
+			debugoverlay.Line(PREDPOS, NEXTPOS, 0.1, col, false)
+		end
+
+		PREDPOS = NEXTPOS
+		PITCH = self:GetLobPitch((PREDPOS - shootPos):Length2D(), PREDPOS.z - shootPos.z, v0, data.m_flGravity)
+		local dist = (PREDPOS - shootPos):Length2D()
+		local sTime = self:TravelTime(dist, v0, PITCH) + data.m_flCompTime
+		if sTime < TIME then
+			FINALPOS = PREDPOS
+			break
+		end
+
+		TIME = TIME + STEPTIME
+	end
+
+	if not FINALPOS then return end
+	local ang = Angle(-API.Protected_G.math.deg(PITCH), (FINALPOS - shootPos):Angle().y, 0)
+	local final = shootPos + ang:Forward() * (FINALPOS - shootPos):Length2D()
+	return final
+end
+
+function Aim.Crossbow(target)
+	local tPos = SOLUMISVERYAWESOMEANDSMART:Uninterpolate(target, target:WorldSpaceCenter())
+	local lPos = LPLY:GetShootPos()
+	local wishpos = SOLUMISVERYAWESOMEANDSMART:SolveProjectile(target, tPos, lPos, 3500)
+	if not wishpos then return end
+	return wishpos
+end
+
+-- S0LUM AIM (TM)
+local PlayerCache = {
+	lastUpdate = 0,
+	updateInterval = 0.1,
+	playerIndices = {}
+}
+
+function PlayerCache:Update()
+	if CurTime() - self.lastUpdate < self.updateInterval then return end
+	self.lastUpdate = CurTime()
+	for i = #self.playerIndices, 1, -1 do
+		local entIndex = self.playerIndices[i]
+		local ent = Entity(entIndex)
+		if not exodium.IsValid(ent) or not ent:IsPlayer() then table.remove(self.playerIndices, i) end
+	end
+
+	for _, ply in ipairs(GetPlayers) do
+		if exodium.IsValid(ply) then
+			local entIndex = ply:EntIndex()
+			if not table.HasValue(self.playerIndices, entIndex) then table.insert(self.playerIndices, entIndex) end
+		end
+	end
+end
+
+function PlayerCache:GetPlayers()
+	local players = {}
+	for _, entIndex in ipairs(self.playerIndices) do
+		local ent = Entity(entIndex)
+		if exodium.IsValid(ent) and ent:IsPlayer() then table.insert(players, ent) end
+	end
+	return players
+end
+
+function PlayerCache:GetVisiblePlayers(origin, wishPos)
+	self:Update()
+	origin = origin or LPLY
+	local originPos = IsEntity(origin) and origin:GetShootPos() or origin
+	local visiblePlayers = {}
+	for _, entIndex in ipairs(self.playerIndices) do
+		local ply = Entity(entIndex)
+		if not exodium.IsValid(ply) or ply == origin or not ply:Alive() then continue end
+		local plyCenter = ply:WorldSpaceCenter()
+		local trace = util.TraceLine({
+			start = originPos,
+			endpos = plyCenter,
+			filter = origin,
+			mask = MASK_VISIBLE
+		})
+
+		if trace.Entity == ply or not trace.Hit then
+			table.insert(visiblePlayers, ply)
+			debugoverlay.Line(originPos, plyCenter, 0.1, Color(0, 255, 0), true)
+		else
+			debugoverlay.Line(originPos, trace.HitPos, 0.1, Color(255, 0, 0), true)
+		end
+	end
+	return visiblePlayers
+end
+
+function PlayerCache:GetClosestVisiblePlayer(origin)
+	self:Update()
+	origin = origin or LPLY
+	local originPos = IsEntity(origin) and origin:GetShootPos() or origin
+	local closestDist = API.Protected_G.math.huge
+	local closestPlayer = nil
+	for _, entIndex in ipairs(self.playerIndices) do
+		local ply = Entity(entIndex)
+		if not exodium.IsValid(ply) or ply == origin or not ply:Alive() then continue end
+		local plyCenter = ply:WorldSpaceCenter()
+		local dist = originPos:Distance(plyCenter)
+		if dist >= closestDist then continue end
+		local trace = util.TraceLine({
+			start = originPos,
+			endpos = plyCenter,
+			filter = origin,
+			mask = MASK_VISIBLE
+		})
+
+		if trace.Entity == ply or not trace.Hit then
+			closestDist = dist
+			closestPlayer = ply
+			debugoverlay.Line(originPos, plyCenter, 0.1, Color(0, 255, 0), true)
+		else
+			debugoverlay.Line(originPos, trace.HitPos, 0.1, Color(255, 0, 0), true)
+		end
+	end
+	return closestPlayer
+end
+
+local HitboxManager = {
+	tModelCache = {}
+}
+
+function HitboxManager:GenerateModelData(strModelPath)
+	strModelPath = strModelPath or "models/error.mdl"
+	-- Return cached data if available
+	if self.tModelCache[strModelPath] then return self.tModelCache[strModelPath] end
+	-- Open model file
+	local fileStream = file.Open(strModelPath, "rb", "GAME")
+	if not fileStream then
+		self.tModelCache[strModelPath] = nil
+		return nil
+	end
+
+	-- Verify model header
+	local strHeaderID = fileStream:Read(4)
+	if strHeaderID ~= "IDST" then
+		fileStream:Close()
+		self.tModelCache[strModelPath] = nil
+		return nil
+	end
+
+	-- Parse model data
+	local tModelData = {}
+	tModelData.iVersion = fileStream:ReadLong()
+	tModelData.iChecksum = fileStream:ReadLong()
+	fileStream:Read(64) -- Skip model name
+	tModelData.iDataLength = fileStream:ReadLong()
+	fileStream:Read(12) -- Skip eyeposition
+	fileStream:Read(12) -- Skip illumposition
+	fileStream:Read(12) -- Skip hull_min
+	fileStream:Read(12) -- Skip hull_max
+	fileStream:Read(12) -- Skip view_bbmin
+	fileStream:Read(12) -- Skip view_bbmax
+	tModelData.iFlags = fileStream:ReadLong()
+	-- Parse bone data
+	tModelData.iBoneCount = fileStream:ReadLong()
+	tModelData.iBoneOffset = fileStream:ReadLong()
+	-- Parse bone controller data
+	tModelData.iBoneControllerCount = fileStream:ReadLong()
+	tModelData.iBoneControllerOffset = fileStream:ReadLong()
+	-- Parse hitbox data
+	tModelData.iHitboxCount = fileStream:ReadLong()
+	tModelData.iHitboxOffset = fileStream:ReadLong()
+	fileStream:Seek(tModelData.iHitboxOffset)
+	tModelData.iNameIndex = fileStream:ReadLong()
+	tModelData.iHitboxSetCount = fileStream:ReadLong()
+	tModelData.iHitboxIndex = fileStream:ReadLong()
+	fileStream:Seek(tModelData.iHitboxOffset + tModelData.iHitboxIndex)
+	tModelData.tHitboxes = {}
+	-- Parse valid hitboxes
+	for i = 1, tModelData.iHitboxSetCount do
+		local tHitbox = {}
+		tHitbox.iBone = fileStream:ReadLong()
+		tHitbox.iHitgroup = fileStream:ReadLong()
+		tHitbox.vMins = Vector(fileStream:ReadFloat(), fileStream:ReadFloat(), fileStream:ReadFloat())
+		tHitbox.vMaxs = Vector(fileStream:ReadFloat(), fileStream:ReadFloat(), fileStream:ReadFloat())
+		tHitbox.vCenter = (tHitbox.vMins + tHitbox.vMaxs) / 2
+		tHitbox.iNameIndex = fileStream:ReadLong()
+		fileStream:Read(32) -- Skip unused data
+		table.insert(tModelData.tHitboxes, tHitbox)
+	end
+
+	fileStream:Close()
+	self.tModelCache[strModelPath] = tModelData
+	return tModelData
+end
+
+function HitboxManager:GetHitboxData(pEntity)
+	if not IsValid(pEntity) then return nil end
+	local tModelData = self:GenerateModelData(pEntity:GetModel())
+	if not tModelData or not tModelData.tHitboxes then return nil end
+	pEntity:SetupBones()
+	-- Only track hitgroups we're interested in, discard others.
+	-- An excercise would be to adjust this table depending on some config
+	local tHitboxGroups = {
+		[HITGROUP_HEAD] = {},
+		[HITGROUP_CHEST] = {},
+		[HITGROUP_STOMACH] = {},
+		[HITGROUP_LEFTLEG] = {},
+		[HITGROUP_LEFTARM] = {},
+		[HITGROUP_RIGHTARM] = {},
+		[HITGROUP_RIGHTLEG] = {}
+	}
+
+	for i = 1, #tModelData.tHitboxes do
+		local tHitbox = tModelData.tHitboxes[i]
+		if not tHitbox then continue end
+		local mMatrix = pEntity:GetBoneMatrix(tHitbox.iBone)
+		if not mMatrix then continue end
+		local vPosition, angRotation = mMatrix:GetTranslation(), mMatrix:GetAngles()
+		local vMins, vMaxs = tHitbox.vMins, tHitbox.vMaxs
+		local vCenter = Vector(tHitbox.vCenter)
+		vCenter:Rotate(angRotation)
+		local tProcessedHitbox = {
+			vPosition = vPosition + vCenter,
+			angRotation = angRotation,
+			mMatrix = mMatrix,
+			vMins = vMins,
+			vMaxs = vMaxs,
+			iHitgroup = tHitbox.iHitgroup
+		}
+
+		if tHitboxGroups[tHitbox.iHitgroup] then table.insert(tHitboxGroups[tHitbox.iHitgroup], tProcessedHitbox) end
+	end
+	return tHitboxGroups
+end
+
+local flNextBulletTime = 0
+-- this takes a regular key (not an enum, an actual str	ing such as "f" or "alt" etc)
+-- and returns if thats being pressed this frame
+local function IsDown(strkey)
+	if exodium.IsValid(vgui.GetKeyboardFocus()) or API.Protected_G.input.IsKeyTrapping() or gui.IsGameUIVisible() then -- if you want to be aimbotting when typing, remove this
+		return
+	end
+
+	local keycode = API.Protected_G.input.GetKeyCode(strkey)
+	return API.Protected_G.input.IsMouseDown(keycode) or API.Protected_G.input.IsKeyDown(keycode)
+end
+
+local ShootChecks = {
+	["bobs"] = function(weapon)
+		-- THIS IS FOR M9K. FIGURE IT OUT.
+		if not exodium.IsValid(weapon) then return false end
+		if not weapon:GetOwner():IsPlayer() then return false end
+		if weapon:GetOwner():KeyDown(IN_RELOAD) then return false end
+		if weapon:GetNWBool("Reloading", false) then return false end
+		if weapon:Clip1() <= 0 then return false end
+		return true
+	end
+}
+
+-- basically, if we are using a weapon that has multiple (or a weird) attack type, set it here.
+-- an exercise is think up some creative way to populate this table automatically.
+local AlternativeAttackTypes = {
+	["weapon_swcs_revolver"] = {IN_ATTACK, IN_ATTACK2}
+}
+
+local function GetWeaponBase(Weapon)
+	if not exodium.IsValid(weapon) then return -1 end
+	local strClass = Weapon:GetClass()
+	if not Weapon:IsScripted() then return "ENGINE" end
+	if Weapon.Base then
+		return string.Split(string.lower(Weapon.Base), "_")[1]
+	else
+		return -1
+	end
+end
+
+local function GetAttackType(cmd, Weapon)
+	local AttackType = IN_ATTACK -- Default attack type
+	if AlternativeAttackTypes[WepClass] then
+		for i = 1, #AlternativeAttackTypes[WepClass] do
+			local AltType = AlternativeAttackTypes[WepClass][i]
+			if CUserCmd_KeyDown(cmd,AltType) then AttackType = AltType end
+		end
+	end
+	-- if you want to be a chad and handle weird weapons like the nyan gun (which has three attack types, one of which is a projectile) 
+	-- you can override here.
+	-- EXAMPLE:
+	--if predictedWeapons[WepClass] and CUserCmd_KeyDown(cmd,predictedWeapons[WepClass].attackType) then
+	--    AttackType = predictedWeapons[WepClass].attackType
+	--end
+	return AttackType
+end
+
+local function CanShoot(Weapon, WepClass, WepBase)
+    if exodium:WeaponCheck() then return end
+	if Weapon:GetActivity() == ACT_RELOAD or (Weapon.Clip1 and Weapon:Clip1() ~= -1 and Weapon:Clip1() <= 0) then return false end
+	local bOk = (ShootChecks[WepBase] and ShootChecks[WepBase](Weapon)) or ShootChecks[WepBase] == nil and true
+	return bOk
+end
+
+local function CanAttack(pWep, iAttackEnum, flWait)
+	flWait = flWait or 0
+	if iAttackEnum == IN_ATTACK then return pWep:GetNextPrimaryFire() + flWait <= flNextBulletTime end
+	if iAttackEnum == IN_ATTACK2 then return pWep:GetNextSecondaryFire() + flWait <= flNextBulletTime end
+	return flWait <= flNextBulletTime
+end
+
+local function PerformAttack(cmd, iAttackEnum)
+	if CUserCmd_KeyDown(cmd,IN_SPEED) then OriginalRemoveKey(cmd, IN_SPEED) end
+	if CUserCmd_KeyDown(cmd,IN_ZOOM) then OriginalRemoveKey(cmd, IN_ZOOM) end
+	OriginalRemoveKey(cmd, iAttackEnum)
+	CUserCmd_SetButtons(cmd, bit.bor(CUserCmd_GetButtons(cmd), iAttackEnum))
+	return true
+end
+
+local function PerformAim(cmd, ang)
+	if Derama.ConfigTable["Aim.AimbotType.combobox"].Option == "Context Menu" or Derama.ConfigTable["Aim.AimbotType.combobox"].Option == "Mouse Input" then return end
+
+	OriginalSetViewAngles(cmd, Angle(exodium.NormalizeAngle(ang.p), exodium.NormalizeAngle(ang.y), 0))
+	return true
+end
+
+exodium.FunnyBones = {
+	["Head"] = HITGROUP_HEAD,
+	["Chest"] = HITGROUP_CHEST,
+	["Stomach"] = HITGROUP_STOMACH,
+	["Left Arm"] = HITGROUP_LEFTARM,
+	["Right Arm"] = HITGROUP_RIGHTARM,
+	["Left Leg"] = HITGROUP_LEFTLEG,
+	["Right Leg"] = HITGROUP_RIGHTLEG
+}
+
+local function GetValidHitbox(pTarget)
+	local tHitboxes = HitboxManager:GetHitboxData(pTarget)
+	local hChoose = Derama.ConfigTable["Aim.AimbotBones.combobox"].Option
+	local Boner = exodium.FunnyBones[hChoose]
+	if not tHitboxes then return end
+	for iHitGroup, tData in pairs(tHitboxes) do
+		if hChoose == "Random" then Boner = math.random(0, iHitGroup) end
+		if iHitGroup ~= Boner then --[[ change this to whatever you want -----> ]]
+			continue
+		end
+
+		for _, Hitbox in ipairs(tData) do
+			return Hitbox
+		end
+	end
+end
+
+local function GetAimPos(pTarget)
+	local ValidHitBox = GetValidHitbox(pTarget)
+	if not ValidHitBox then return pTarget:LocalToWorld(pTarget:OBBCenter()) end
+	local vAimPos = ValidHitBox.vPosition
+	if not vAimPos then return pTarget:LocalToWorld(pTarget:OBBCenter()) end
+	return vAimPos
+end
+
+local TurnOff = true
+function Aim:forwardtrackingwarning()
+	if not Derama.ConfigTable["Aim.extrapolation.checkbox"] then return end
+	local Ping = API.NetChannel_GetLatency(0) * 1000
+	if Ping > 140 and TurnOff then
+		TurnOff = false
+		exodium.Notifications("Your ping is really high. The forward-tracking is going to miss!", Derama.ConfigTable["Misc.TitleBarsAndButtons.colormixer"], true)
+	end
+
+	if Ping < 140 then TurnOff = true end
+end
+
+function Aim:GrustPoop(pTarget)
+    local Wep = LPLY:GetActiveWeapon()
+    local WEAPONVEL = Wep.BulletVelocity or 4000
+
+    /*
+    local Position = GetAimPos(pTarget)
+    local Vel = pTarget:GetAbsVelocity()
+    local distanceCalc = LPLY:GetShootPos():Distance(Position)
+    //if Wep == "rust_huntingbow" then
+       // WEAPONVEL = 4000
+    //elseif Wep == "rust_nailgun" then
+       // WEAPONVEL = 2500
+    //end
+    local TravelTime = distanceCalc / WEAPONVEL //+ Latency 
+    local Calculation = Position + Vel * TravelTime  
+    */
+    return SOLUMISVERYAWESOMEANDSMART:SolveProjectile(pTarget, GetAimPos(pTarget), LPLY:GetShootPos(), WEAPONVEL)//Vector(Calculation.x,Calculation.y,Calculation.z )
+end
+
+function Aim:Extrapolation(player)
+	local Flow = API.NetChannel_GetLatency(1) + API.NetChannel_GetLatency(0) -- / API.GetNetVar(player, "DT_BaseEntity", "m_flSimulationTime", "Float")
+	return GetAimPos(player) + (player:GetAbsVelocity() * (TICK_INTERVAL * TIME_TO_TICKS(Flow)))
+end
+
+function Aim:VectorThingThatIdontKnowWhatToNAME(Target)
+    local Position = GetAimPos(Target)
+    if Derama.ConfigTable["Aim.extrapolation.checkbox"] then
+        Position = Aim:Extrapolation(Target)
+    end
+    return Position
+end
+
+function Aim.isVisible(Entity)
+	local pos = Aim:VectorThingThatIdontKnowWhatToNAME(Entity)
+	local trace = {
+		start = LPLY:GetShootPos(),
+		endpos = pos,
+		filter = {LPLY, Entity},
+		mask = MASK_SHOT
+	}
+
+	if not util.TraceLine(trace).Hit then return true end
+	return false
+end
+
+function Aim.CrossbowPred(target)
+	local Vel = target:GetAbsVelocity()
+	local VecPos = GetAimPos(target)
+	local ResolveVec = VecPos - Vel
+	return ResolveVec
+end
+
+function Aim.SortPlayers()
+	local GetPlayers = player.GetAll()
+	local closestDist = API.Protected_G.math.huge
+	local bestTarget = nil
+	local maxFOV = Derama.ConfigTable["Aim.Fov.slider"] * 4.8
+	local maxFOVSqr = maxFOV * maxFOV
+	local FriendlyNigga = nil
+	local ClosestHitGroup = nil
+	local fovCircleCheck = Derama.ConfigTable["Aim.Aimbot.fovCircleColor.checkbox"]
+	for i = 1, #GetPlayers do
+		local ply = GetPlayers[i]
+        if not Aim.isVisible(ply) then continue end
+        if ply == LPLY then continue end
+		if not ply:Alive() then continue end
+        if ply:IsDormant() then continue end
+		if PlayerStorage[ply:SteamID64()] then continue end
+		if Derama.ConfigTable["Aim.Team.combobox"] then if LPLY:Team() == ply:Team() then continue end end
+		if ply:Team() == TEAM_SPECTATOR then continue end
+		if Derama.ConfigTable["Aim.Ignorebot.combobox"] and ply:IsBot() then continue end
+		if Derama.ConfigTable["Aim.IgnoreAdmins.combobox"] and (ply:IsAdmin() or ply:IsSuperAdmin()) then continue end
+		if Derama.ConfigTable["Aim.car.combobox"] and ply:InVehicle() then continue end
+		if Derama.ConfigTable["Aim.IgnoreBuild.combobox"] and ply:GetNWBool("_Kyle_Buildmode", false) then continue end
+
+		local bonePos = Aim:VectorThingThatIdontKnowWhatToNAME(ply)
+		local screenPos = OriginalToScreen(bonePos)
+
+        if fovCircleCheck then
+            if not exodium.InScreen(ply) then continue end
+        end
+
+		local dx, dy = screenPos.x - cw, screenPos.y - hc
+		local distSqr = dx * dx + dy * dy
+		if fovCircleCheck then if distSqr > maxFOVSqr then continue end end
+		if distSqr < closestDist then
+			closestDist = distSqr
+			bestTarget = ply
+		end
+	end
+	return bestTarget
+end
+
+function Aim:FetchPlayer()--i dont know if this is going to SAVE...... performance but lets give it a try :-)
+    return Aim.SortPlayers()
+end
+
+local AutoAim = true -- set to true if you want to be constantly scanning for targets
+local function SUPEREPICAIMER9000(cmd)
+	if not Derama.ConfigTable["Aim.Aimbot.checkbox"] then return end
+	if LPLY:GetMoveType() == MOVETYPE_OBSERVER then return end
+	local aWep = LPLY:GetActiveWeapon()
+	if not IsValid(aWep) or not aWep then return end
+	local aWepClass, aWepBase = aWep:GetClass(), GetWeaponBase(aWep)
+	local bCanShoot = CanShoot(aWep, aWepClass, aWepBase)
+	local iAttackEnum = GetAttackType(cmd, aWepClass)
+	local bCanAttack = CanAttack(aWep, iAttackEnum)
+	if WepClass == "weapon_crossbow" then
+		--CustomVec = Aim.CrossbowPred(target)
+	end
+
+	if Derama.ConfigTable["Aim.AutoReload.combobox"] then if aWep:HasAmmo() == false then if LPLY:GetAmmoCount(aWep:GetPrimaryAmmoType()) ~= 0 then OriginalAddKey(cmd, IN_RELOAD) end end end
+	if not bCanShoot then return end
+	if not bCanAttack then
+		-- cmd:RemoveKey(iAttackEnum)
+		-- it might make sense to return early here.
+		-- if you dont, you may still be "aiming" at the entity, but not firing
+		return
+	end
+
+	if not bCanAttack then return end
+	local bAimKeyDown = exodium:ButtonDown(Derama.ConfigTable["Aim.binder"])
+	local bFiringThisTick = false
+	local IsAiming = false
+	if bAimKeyDown then -- abstract this into multiple functions for clarity, for this example, im going to make a big giant scope pyramid
+		local pTarget = Aim:FetchPlayer() --PlayerCache:GetClosestVisiblePlayer()
+		-- local CustomVec = Aim.CrossbowPred(pTarget)
+		IsAiming = true
+		-- TARGET ACQUISITION!
+		-- 1: Find nearest viable player. (closest to our pos, or our crosshair)
+		-- 2: Ensure viable player is visible (THIS IS WHERE IT GETS INTERESTING)
+		-- 	2. a): Discard players naively (simple trace to their world space center from our shoot pos)
+		--PROS: Significantly faster, we are discarding unlikely players early, prioritizing players we are certain are hittable
+		--CONS: We will miss out on viable shots (their world space center is obscured but their head isnt)
+		-- 	2. b): Discard players robustly (do not discard any players, consider them all valid until we perform our final shoot check)
+		--PROS: Significantly more ACCURATE. We can hit players obscured behind walls so long as any valid position is available to us
+		--CONS: VERY slow. Since we treat all players as equally viable, we must fetch ALL hitbox data for EVERY entity.
+		-- 2. c) Hybrid approach. (Perform naive check, prioritizing visible players first, if no players are visible with naive check, move onto robust check)
+		-- PROS: Best of both worlds.
+		-- CONS: Theres a chance that we iterate all players, perform naive check, sort them, and then come to the 
+		-- conclusion that the only viable player was the one deemed most "unlikely" 
+		-- (We still have to perform both naive checks and robust checks on every viable entity)
+		-- 3: SHOOT AT THE FUCKIN GUY
+		-- FOR NOW:
+		-- we are going with option A. This is not the most "Accurate" but in my experience, it is the best overall.
+		-- Typically, i usually discard players naively and then perform similar naive checks 
+		-- (or even more advanced ones such as multipoint etc) on each of their backtrack records.
+		local AimPos = nil
+		if exodium.IsValid(pTarget) then
+			if not pTarget:IsPlayer() and not pTarget:IsNPC() then -- redundant. PlayerCache already sanitizes its cache
+				return false
+			end
+
+			if pTarget == LPLY then return end
+			local AimPos = Aim:VectorThingThatIdontKnowWhatToNAME(pTarget) //  Aim:GrustPoop(pTarget) 
+			local tickDiff = TIME_TO_TICKS(API.NetChannel_GetLatency(1) + API.NetChannel_GetLatency(0)) 
+			if AimPos then
+				local AimPosToScreen = OriginalToScreen(AimPos)
+				if Derama.ConfigTable["Aim.Aimbot.fovCircleColor.checkbox"] then
+					local AimbotFov = Derama.ConfigTable["Aim.Fov.slider"]
+					if not isPointInCircle(AimPosToScreen.x, AimPosToScreen.y, cw, hc, AimbotFov * 4.8) then return end
+				end
+
+				local Ang = (AimPos - LPLY:GetShootPos()):Angle()
+				if Derama.ConfigTable["Aim.CompMethod.combobox"].Option == "On Aimbot" then
+					if Derama.ConfigTable["Aim.Nospread.combobox"] then Ang = NS:CalculateSpread(cmd, aWep, Ang) end
+					if Derama.ConfigTable["Aim.Recoil.combobox"] then
+				        if not NS:GetWeaponBase(aWep) == "m9k" or "tom" then Ang = Ang - Get_ViewPunc(LPLY) end
+					end
+				end
+
+				local bAimed = PerformAim(cmd, Ang)
+				if Derama.ConfigTable["Aim.AimbotType.combobox"].Option == "Context Menu" then
+					bAimed = API.UserCmd.SetWorldClicker(cmd, Ang:Forward())
+				elseif Derama.ConfigTable["Aim.AimbotType.combobox"].Option == "Mouse Input" then
+					-- NOT HERE
+				end
+
+				if Derama.ConfigTable["Aim.AutoShoot.combobox"] then PerformAttack(cmd, iAttackEnum) end
+				if Derama.ConfigTable["Aim.extrapolation.checkbox"] then API.UserCmd.SetTick(cmd, CUserCmd_TickCount(cmd) + tickDiff) end
+				if Derama.ConfigTable["Aim.0Interp.checkbox"] then AimPos = AimPos * Aim.GetLerpAmmount() end
+			end
+		end
+	end
+
+	-- this is your constant nospread (for example, shooting at a wall or something without a target)
+	if not bShouldPredict and not bFiringThisTick then
+		local ang = CUserCmd_GetViewAngles(cmd) -- angPreCMoveViewAngle -- your angle BEFORE you do anything to it. (basically, set this at the top of your createmove hook)
+		if CUserCmd_KeyDown(cmd,iAttackEnum) and not bFiringThisTick then
+			-- first force your seed here (if desired)
+			if Derama.ConfigTable["Aim.Seednospread.checkbox"] then API.UserCmd.SetRandomSeed(cmd, Derama.ConfigTable["Aim.SeedAmmount.slider"]) end
+			if Derama.ConfigTable["Aim.CompMethod.combobox"].Option == "Allways on" then
+				-- then, calculate your spread (update 'ang')
+				if Derama.ConfigTable["Aim.Nospread.combobox"] then ang = NS:CalculateSpread(cmd, LPLY:GetActiveWeapon(), ang) end
+				-- next, adjust your recoil
+				if Derama.ConfigTable["Aim.Recoil.combobox"] then if not NS:GetWeaponBase(aWep) == "m9k" or "tom" then ang = ang - Get_ViewPunc(LPLY)end end
+			end
+
+			-- then, aim at the adjusted spot.
+			PerformAim(cmd, ang)
+			return
+		end
+	end
+end
+
+function Aim.SnapLine()
+	if not Derama.ConfigTable["Aim.Aimbot.Target.checkbox"] then return end
+	if exodium:ButtonDown(Derama.ConfigTable["Aim.binder"]) then
+        local ply = Aim:FetchPlayer()
+        if not ply then return end
+        local Bones = Aim:VectorThingThatIdontKnowWhatToNAME(ply)
+        if Derama.ConfigTable["Aim.AimbotBones.combobox"].Option == "Random" then Bones = ply:GetPos() end
+        local BonesScreen = OriginalToScreen(Bones)
+        DrawCustomLine(Derama.ConfigTable["Aim.Aimbot.Target.colormixer"],cw, hc, BonesScreen.x, BonesScreen.y)
+	end
+end
+
+--[[
+
+Rage Functions
+
+]]
+function Rage.DumpBot()
+	if not Derama.ConfigTable["Rage.DumpBot.checkbox"] then return end
+	if exodium:ButtonDown(Derama.ConfigTable["Visuals.DumpBot.binder"]) then API.NetChannel_SetChokedPackets(API.Protected_G.math.random(1, TICK_INTERVAL)) end
+end
+
+function Rage.FakeDuckThing(cmd)
+	local ViewAngle = CUserCmd_GetViewAngles(cmd)
+	if CUserCmd_KeyDown(cmd,IN_ATTACK) then return end
+	OriginalSetViewAngles(cmd, Angle(89, ViewAngle.y))
+end
+
+function Rage.FakeDuck(cmd)
+	if not Derama.ConfigTable["Movement.Fake.kDuc.Peek"] then return end
+	FakeDuck = false
+	if exodium:ButtonDown(Derama.ConfigTable["Movement.Fake.Duck.binder"]) then
+		FakeDuck = true
+		if not Derama.ConfigTable["Rage.FakeLag.checkbox"] then SendPacket = ChokePackets >= 1 end
+		if Derama.ConfigTable["Movement.Fake.duckDown.Peek"] then Rage.FakeDuckThing(cmd) end
+		if SendPacket then
+			OriginalAddKey(cmd, IN_DUCK)
+		else
+			OriginalRemoveKey(cmd, IN_DUCK)
+		end
+	end
+end
+
+function Rage.SimTime(cmd)
+	if not Derama.ConfigTable["Rage.desync.checkbox"] then return end
+    SendPacket = ChokePackets >= math.random(1,14)
+	API.NetChannel_SetChokedPackets(200)
+end
+
+function Rage.Sequencem()
+	if (not Derama.ConfigTable["Rage.Sequencem.checkbox"]) or not API.Protected_G.input.IsKeyDown(Derama.ConfigTable["Visuals.sequencem.binder"]) then return end
+	if API.Protected_G.input.IsKeyDown(Derama.ConfigTable["Visuals.sequencem.binder"]) then
+		local thestuff = API.Protected_G.math.random(Derama.ConfigTable["Rage.OutSequencem.slider"], Derama.ConfigTable["Rage.Sequencem.slider"])
+		API.NetChannel_SetOutSequenceNumber(API.NetChannel_GetOutSequenceNumber() + thestuff)
+	end
+end
+
+function Rage.DoubleTap(cmd)
+	if not Derama.ConfigTable["Rage.DoubleTap.checkbox"] then return end
+	if CUserCmd_KeyDown(cmd,IN_ATTACK) then API.NetChannel_SetOutSequenceNumber(API.NetChannel_GetOutSequenceNumber() + API.Protected_G.math.random(5, TICK_INTERVAL - 1)) end
+end
+
+function Rage.Resolver()
+	if not Derama.ConfigTable["Rage.Resolver.checkbox"] then return end
+	local Players_Find = player.GetAll()
+	for i = 1, #Players_Find do
+		local Ang_Storage = {}
+        local ply = Players_Find[i]
+		//if LPLY:Team() == Players_Find[i]:Team() then continue end
+		if ply == LPLY then continue end
+
+		local Target_Ang = ply:GetAngles()
+		ply:SetRenderAngles(Angle(0,API.Protected_G.math.random(180, -180),0)) --Angle(0,API.Protected_G.math.Approach(e),0)
+		ply:SetPoseParameter("aim_pitch", API.Protected_G.math.random(180, -180)) --API.Protected_G.math.random(180, -180)
+	end
+end
+
+function Rage.FakeLag(cmd)
+	if not Derama.ConfigTable["Rage.FakeLag.checkbox"] then return end
+	SendPacket = ChokePackets >= Derama.ConfigTable["Rage.FakeLag.slider"]
+end
+
+local function OscillateFlip(time, value1, value2, interval)
+    if math.floor(time / interval) % 2 == 0 then
+        return value1
+    else
+        return value2
+    end
+end
+
+local Pitch = 0
+local Yaw = 0
+local FakePitch = 0
+local FakeYaw = 0
+
+local AntiAimMethods = {
+    RealYawMethods = {
+        ["Spin"] = function()
+            Yaw = (CurTime() * 1000) % 360
+        end,
+        ["Jitter"] = function()
+            Yaw = API.Protected_G.math.random(0, 180)
+        end,
+        ["SideWays"] = function()
+            Yaw = 180
+        end,
+        ["Back"] = function()
+            Yaw = -360
+        end,
+        ["Custom"] = function()
+            Yaw = Derama.ConfigTable["Rage.Yaw.slider"]
+        end
+    },
+    FakeYawMethods = {
+        ["Spin"] = function()
+            FakeYaw = (CurTime() * 1000) % 360
+        end,
+        ["Jitter"] = function()
+            FakeYaw = API.Protected_G.math.random(0, 180)
+        end,
+        ["SideWays"] = function()
+            FakeYaw = -180
+        end,
+        ["Back"] = function()
+            FakeYaw = 360
+        end,
+        ["Custom"] = function()
+            FakeYaw = Derama.ConfigTable["Rage.FakeYaw.slider"]
+        end
+    },
+    RealPitchMethods = {
+        ["Down"] = function()
+            Pitch = 89
+        end,
+        ["Up"] = function()
+            Pitch = -89
+        end,    
+        ["Up & Down"] = function()
+            Pitch = OscillateFlip(CurTime(), 89, -89, 0.1)
+        end, 
+        ["Custom"] = function()
+            Pitch = Derama.ConfigTable["Rage.Pitch.slider"]
+        end
+    },
+    FakePitchMethods = {
+        ["Down"] = function()
+            FakePitch = 89
+        end,
+        ["Up"] = function()
+            FakePitch = -89
+        end,    
+        ["Up & Down"] = function()
+            FakePitch = OscillateFlip(CurTime(), 89, -89, 0.1)
+        end, 
+        ["Custom"] = function()
+            FakePitch = Derama.ConfigTable["Rage.FakePitch.slider"]
+        end
+    }
+}
+
+function Rage.AntiAim(cmd)
+	if not Derama.ConfigTable["Rage.AntiAim.checkbox"] then return end
+
+	if CUserCmd_KeyDown(cmd,IN_USE) or CUserCmd_KeyDown(cmd,IN_ATTACK) then return end
+
+    if exodium:MovementTypeCheck() then return end
+
+    local thingFakePitch = AntiAimMethods.FakePitchMethods[Derama.ConfigTable["Rage.AntiAim.Fakepitch.combobox"].Option]
+    local thingFakeYaw = AntiAimMethods.FakeYawMethods[Derama.ConfigTable["Rage.AntiAim.Fakeyaw.combobox"].Option]
+    local RealPitch = AntiAimMethods.RealPitchMethods[Derama.ConfigTable["Rage.AntiAim.pitch.combobox"].Option]
+    local RealYaw = AntiAimMethods.RealYawMethods[Derama.ConfigTable["Rage.AntiAim.yaw.combobox"].Option]
+
+    RealPitch()
+    RealYaw()
+    thingFakeYaw()
+    thingFakePitch()
+    
+    if SendPacket then
+        OriginalSetViewAngles(cmd, Angle(Pitch, Yaw))
+    else
+        OriginalSetViewAngles(cmd, Angle(FakePitch, FakeYaw))
+    end
+end
+
+--[[
+
+Misc Functions
+
+]]
+
+function Misc:WeedMenu()
+    if not Derama.ConfigTable["Misc.zaza menu.checkbox"] then return end
+
+    if exodium:ButtonDown(Derama.ConfigTable["Misc.openmenu.binder"]) then
+        zgo2.Multitool.OpenMenu(nil,zgo2.Shop.List)
+    end
+end
+
+local Rad = 400
+
+function Misc:EntShit()
+    local SpherePos = ents.FindInSphere(LPLY:GetPos(), Rad)
+    for _, ent in ipairs(SpherePos) do
+        if ent:GetClass() == "zbf_controller" then
+            return ent:EntIndex()
+        end
+    end
+    return nil
+end
+
+function Misc:Steal()
+    local grab = Misc:EntShit()
+
+    if not grab then return end
+
+    net.Start("zbf_Wallet_SendToVault")
+    net.WriteUInt(grab, 13)
+    net.WriteUInt(2, 8)
+    net.SendToServer()
+    API.Protected_G.timer.Simple(0.4, function()
+        net.Start("zbf_Wallet_SendToVault")
+        net.WriteUInt(grab, 13)
+        net.WriteUInt(1, 8)
+        net.SendToServer()
+    end)
+	exodium.Notifications("Ammount of money stolen: ".. grab, Color(0, 255, 0))
+end
+
+function Misc:BitcoinGrabber()
+    if not Derama.ConfigTable["Misc.mutinybitcoin.checkbox"] then return end
+    if exodium:ButtonDown(Derama.ConfigTable["Misc.mutinybitcoin.binder"]) then
+        Misc:Steal()
+    end
+end
+
+local MultiplayerAnimState = {
+	Instances = {},
+	MaxAnimationLayers = 15
+}
+
+function MultiplayerAnimState:Create(identifier, ply)
+	local animationState = {}
+
+	animationState.Player = ply
+	animationState.EyeYaw = 0
+	animationState.EyePitch = 0
+	animationState.AimYaw = 0
+	animationState.AimPitch = 0
+	animationState.Cycle = 0
+	animationState.PrevCycle = 0
+	animationState.Sequence = 0
+	animationState.PrevSequence = 0
+	animationState.GoalFeetYaw = 0
+	animationState.CurrentFeetYaw = 0
+	animationState.RenderAngles = Angle(0, 0, 0)
+	animationState.AnimationLayers = {}
+	animationState.AnimationTime = 0
+	animationState.EstimateYaw = 0
+	animationState.MoveX = 0
+	animationState.MoveY = 0
+
+	for i = 0, self.MaxAnimationLayers do
+		table.insert(animationState.AnimationLayers, i, {
+			Cycle = 0,
+			PrevCycle = 0,
+			Sequence = 0,
+			PrevSequence = 0,
+			Weight = 0,
+			PrevWeight = 0
+		})
+	end
+
+	table.insert(self.Instances, identifier, animationState)
+end
+
+function MultiplayerAnimState:ConvergeYawAngles(identifier, goalYaw, yawRate, deltaTime, currentYaw)
+	local deltaYaw = goalYaw - currentYaw
+	local deltaYawAbs = math.abs(deltaYaw)
+	deltaYaw = exodium.NormalizeAngle(deltaYaw)
+
+	local scale = math.Clamp(deltaYawAbs / 60, 0.01, 1)
+	local yaw = yawRate * deltaTime * scale
+
+	if deltaYawAbs < yaw then
+		currentYaw = goalYaw
+	else
+		local side = Either(deltaYaw < 0, -yaw, yaw)
+		currentYaw = currentYaw + side
+	end
+
+	self.Instances[identifier].CurrentFeetYaw = exodium.NormalizeAngle(currentYaw)
+end
+
+MOVING_MINIMUM_SPEED = 0.5
+function MultiplayerAnimState:CalcMovementSpeed(identifier)
+	local ply = self.Instances[identifier].Player
+
+	-- Get the player's current velocity and speed.
+	vecVelocity = ply:GetVelocity()
+	local flSpeed = vecVelocity:Length2D()
+
+	if ( flSpeed > MOVING_MINIMUM_SPEED ) then
+		return flSpeed, true
+	end
+
+	return 0.0, false
+end
+
+function MultiplayerAnimState:EstimateYaw(identifier)
+	local ply = self.Instances[identifier].Player
+	local flDeltaTime = engine.TickInterval()
+
+	local vecEstVelocity = ply:GetVelocity()
+	local angles = ply:GetLocalAngles()
+
+	if vecEstVelocity.x == 0.0 and vecEstVelocity.y == 0.0 then
+		local flYawDelta = exodium.NormalizeAngle( angles.y - self.Instances[identifier].EstimateYaw )
+
+		if flDeltaTime < 0.25 then
+			flYawDelta = flYawDelta * ( flDeltaTime * 4.0 )
+		else
+			flYawDelta = flYawDelta * flDeltaTime
+		end
+
+		self.Instances[identifier].EstimateYaw = exodium.NormalizeAngle( self.Instances[identifier].EstimateYaw + flYawDelta )
+	else
+		self.Instances[identifier].EstimateYaw = math.atan2( vecEstVelocity.y, vecEstVelocity.x ) * 180.0 / math.pi
+		self.Instances[identifier].EstimateYaw = math.Clamp( self.Instances[identifier].EstimateYaw, -180.0, 180.0 )
+	end
+end
+
+function MultiplayerAnimState:ComputeMoveYaw(identifier)
+	local ply = self.Instances[identifier].Player
+	self:EstimateYaw(identifier)
+
+	local flAngle = exodium.NormalizeAngle( self.Instances[identifier].EyeYaw )
+
+	local flYaw = flAngle - self.Instances[identifier].EstimateYaw
+	flYaw = exodium.NormalizeAngle( -flYaw )
+
+	local flSpeed, bIsMoving = self:CalcMovementSpeed(identifier)
+
+	local vecCurrentMoveYaw = Vector( 0.0, 0.0 )
+	if ( bIsMoving ) then
+			vecCurrentMoveYaw.x = math.cos( math.rad( flYaw ) )
+			vecCurrentMoveYaw.y = -math.sin( math.rad( flYaw ) )
+			local flInvScale = math.max( math.abs( vecCurrentMoveYaw.x ), math.abs( vecCurrentMoveYaw.y ) )
+			if ( flInvScale ~= 0.0 ) then
+				vecCurrentMoveYaw.x = vecCurrentMoveYaw.x / flInvScale
+				vecCurrentMoveYaw.y = vecCurrentMoveYaw.y / flInvScale
+			end
+			self.Instances[identifier].Player:SetPoseParameter("move_x", vecCurrentMoveYaw.x)
+			self.Instances[identifier].Player:SetPoseParameter("move_y", vecCurrentMoveYaw.y)
+			local flMaxSpeed = ply:GetSequenceGroundSpeed( self.Instances[identifier].Sequence )
+			if ( flMaxSpeed > flSpeed ) then
+				vecCurrentMoveYaw.x = vecCurrentMoveYaw.x * (flSpeed / flMaxSpeed)
+				vecCurrentMoveYaw.y = vecCurrentMoveYaw.y * (flSpeed / flMaxSpeed)
+			end
+			self.Instances[identifier].MoveX = vecCurrentMoveYaw.x
+			self.Instances[identifier].MoveY = vecCurrentMoveYaw.y
+	else
+		self.Instances[identifier].MoveX = 0
+		self.Instances[identifier].MoveY = 0
+	end
+end
+
+function MultiplayerAnimState:ComputeAimPitch(identifier)
+	local aimPitch = self.Instances[identifier].EyePitch
+	if (aimPitch < -89 and aimPitch > -360) then -- inrange(aimPitch, -360, -89)
+		aimPitch = 89
+	end
+    local hActiveWeapon = self.Instances[identifier].Player:GetActiveWeapon()
+
+	if hActiveWeapon:IsValid() and hActiveWeapon.IsSWCSWeapon then
+		aimPitch = exodium.NormalizeAngle(aimPitch + hActiveWeapon:GetNWFloat("m_flThirdpersonRecoil"))
+	end
+
+	-- Set the aim pitch pose parameter and save.
+	self.Instances[identifier].AimPitch = aimPitch
+end
+
+function MultiplayerAnimState:ComputeAimYaw(identifier)
+	local ply = self.Instances[identifier].Player
+	local velocity = ply:GetVelocity()
+	local isMoving = Either(velocity:Length() > 1, true, false)
+
+	if isMoving then
+		self.Instances[identifier].GoalFeetYaw = self.Instances[identifier].EyeYaw
+	else
+		local yawDelta = exodium.NormalizeAngle(self.Instances[identifier].GoalFeetYaw - self.Instances[identifier].EyeYaw)
+		if (math.abs(yawDelta) > 45) then
+			self.Instances[identifier].GoalFeetYaw = self.Instances[identifier].GoalFeetYaw + Either(yawDelta > 0, -45, 45)
+		end
+	end
+
+	self.Instances[identifier].GoalFeetYaw = exodium.NormalizeAngle(self.Instances[identifier].GoalFeetYaw)
+	if self.Instances[identifier].GoalFeetYaw ~= self.Instances[identifier].CurrentFeetYaw then
+		self:ConvergeYawAngles(identifier, self.Instances[identifier].GoalFeetYaw, 720, engine.TickInterval(), self.Instances[identifier].CurrentFeetYaw)
+	end
+end
+
+function MultiplayerAnimState:UpdateEyeAngles(Ang, identifier)
+	local ply = self.Instances[identifier].Player
+	if not IsValid(ply) then
+		table.remove(self.Instances[identifier])
+		return
+	end
+
+	local eyeAngles = Ang
+	self.Instances[identifier].EyePitch = exodium.NormalizeAngle(eyeAngles.p)
+	self.Instances[identifier].EyeYaw = exodium.NormalizeAngle(eyeAngles.y)
+end
+
+function MultiplayerAnimState:UpdateAnimationState(identifier)
+	local ply = self.Instances[identifier].Player
+	if not IsValid(ply) then
+		table.remove(self.Instances[identifier])
+		return
+	end
+
+	if ply:Alive() then
+		self:ComputeMoveYaw(identifier)
+		self:ComputeAimPitch(identifier)
+		self:ComputeAimYaw(identifier)
+	end
+end
+
+function MultiplayerAnimState:UpdateCachedPoseParameters(identifier)
+	local ply = self.Instances[identifier].Player
+	if not IsValid(ply) then
+		table.remove(self.Instances[identifier])
+		return
+	end
+
+	self.Instances[identifier].Cycle = ply:GetCycle()
+	self.Instances[identifier].Sequence = ply:GetSequence()
+	-- self.Instances[identifier].AnimationTime = ply:GetAnimTime()
+
+	for i = 0, self.MaxAnimationLayers do
+		self.Instances[identifier].AnimationLayers[i].Cycle = ply:GetLayerCycle(i)
+		self.Instances[identifier].AnimationLayers[i].Sequence = ply:GetLayerSequence(i)
+		self.Instances[identifier].AnimationLayers[i].Weight = ply:GetLayerWeight(i)
+	end
+
+	self.Instances[identifier].AimYaw = exodium.NormalizeAngle(self.Instances[identifier].EyeYaw - self.Instances[identifier].CurrentFeetYaw)
+	self.Instances[identifier].RenderAngles.y = self.Instances[identifier].CurrentFeetYaw
+end
+
+function MultiplayerAnimState:ApplyCachedPoseParameters(identifier)
+	local ply = self.Instances[identifier].Player
+	if not IsValid(ply) then
+		table.remove(self.Instances[identifier])
+		return
+	end
+
+	ply:SetPoseParameter("aim_pitch", self.Instances[identifier].AimPitch)
+	ply:SetPoseParameter("aim_yaw",	self.Instances[identifier].AimYaw)
+	ply:SetPoseParameter("move_x",	self.Instances[identifier].MoveX)
+	ply:SetPoseParameter("move_y",	self.Instances[identifier].MoveY)
+	ply:SetRenderAngles(self.Instances[identifier].RenderAngles)
+end
+
+function MultiplayerAnimState:ApplyAnimationLayers(identifier)
+	local ply = self.Instances[identifier].Player or instance
+	if not IsValid(ply) then
+		table.remove(self.Instances[identifier])
+		return
+	end
+
+	self.Instances[identifier].PrevCycle = ply:GetCycle()
+	self.Instances[identifier].PrevSequence = ply:GetSequence()
+	self.Instances[identifier].AnimationTime = ply:GetAnimTime()
+
+	ply:SetSequence(self.Instances[identifier].Sequence)
+	ply:SetCycle(self.Instances[identifier].Cycle)
+	ply:SetAnimTime(RoundToTicks(self.Instances[identifier].AnimationTime))
+
+	for i = 0, self.MaxAnimationLayers do
+		if ply:IsValidLayer(i) then
+			self.Instances[identifier].AnimationLayers[i].PrevCycle = ply:GetLayerCycle(i)
+			self.Instances[identifier].AnimationLayers[i].PrevSequence = ply:GetLayerSequence(i)
+			self.Instances[identifier].AnimationLayers[i].PrevWeight = ply:GetLayerWeight(i)
+		end
+
+		ply:SetLayerSequence(i, self.Instances[identifier].AnimationLayers[i].Sequence)
+		ply:SetLayerCycle(i, self.Instances[identifier].AnimationLayers[i].Cycle)
+		ply:SetLayerWeight(i, self.Instances[identifier].AnimationLayers[i].Weight)
+	end
+end
+
+function MultiplayerAnimState:RestoreAnimationLayers(identifier)
+	local ply = self.Instances[identifier].Player
+	if not IsValid(ply) then
+		table.remove(self.Instances[identifier])
+		return
+	end
+
+	ply:SetSequence(self.Instances[identifier].PrevSequence)
+	ply:SetCycle(self.Instances[identifier].PrevCycle)
+	ply:SetAnimTime(self.Instances[identifier].AnimationTime)
+
+	for i = 0, self.MaxAnimationLayers do
+		ply:SetLayerSequence(i, self.Instances[identifier].AnimationLayers[i].PrevSequence)
+		ply:SetLayerCycle(i, self.Instances[identifier].AnimationLayers[i].PrevCycle)
+		ply:SetLayerWeight(i, self.Instances[identifier].AnimationLayers[i].PrevWeight)
+	end
+end
+
+MultiplayerAnimState:Create(LP_FAKE, LPLY)
+MultiplayerAnimState:Create(LP_REAL, LPLY)
+
+function MultiplayerAnimState:OnPrePlayerDraw(player,id)
+	if player ~= LPLY then
+		return end
+
+	if self.Instances[id] then
+		MultiplayerAnimState:ApplyCachedPoseParameters(id)
+		MultiplayerAnimState:ApplyAnimationLayers(id)
+		player:UseClientSideAnimation(false)
+		player:AnimResetGestureSlot(GESTURE_SLOT_VCD)
+		player:AnimResetGestureSlot(GESTURE_SLOT_CUSTOM)
+		player:SetPoseParameter("head_pitch", 0)
+		player:SetPoseParameter("head_yaw", 0)
+		player:InvalidateBoneCache()
+		player:SetupBones()
+	end
+end
+
+function MultiplayerAnimState:OnPostPlayerDraw(player,id)
+	if player ~= LPLY then
+		return
+	end
+
+	if self.Instances[id] then
+		self:RestoreAnimationLayers(id)
+        return
+	end
+end
+
+function MultiplayerAnimState:SetAnimations(Ang,id)
+    if MultiplayerAnimState.Instances[id] then
+        MultiplayerAnimState:UpdateEyeAngles(Ang,id)
+        MultiplayerAnimState:UpdateAnimationState(id)
+        MultiplayerAnimState:UpdateCachedPoseParameters(id)
+    end
+end
+
+local Delay = 0
+function Misc:VapeGOGREEEEEN(cmd)
+	if not Derama.ConfigTable["Misc.vapefun.checkbox"] then return end
+	if NS:GetWeaponBase(LPLY:GetActiveWeapon()) == "weapon" then --suppost to be for the atomic vapes but the owner is brainded and names all the weapon bases the same shi so fuck it :(
+		if exodium:ButtonDown(Derama.ConfigTable["Misc.vapefun.binder"]) and CurTime() >= Delay then
+			OriginalAddKey(cmd, IN_ATTACK2)
+			Delay = CurTime() + 0.1
+		end
+	end
+end
+
+chatShouldIdoIt = false
+function Misc.SpammM1(cmd)
+	if not Derama.ConfigTable["Misc.SpammM1.checkbox"] then return end
+	if exodium:ButtonDown(Derama.ConfigTable["settings.M1spamm.binder"]) then if chatShouldIdoIt then OriginalAddKey(cmd, IN_ATTACK) end end
+	chatShouldIdoIt = not chatShouldIdoIt
+end
+
+function Misc.Interpolation()
+	if not Derama.ConfigTable["Misc.Interpolation.Peek"] then return end
+	API.NetChannel_SetInterpolationAmount(0)
+end
+
+function Misc.FlashLightspam(cmd)
+	if not Derama.ConfigTable["Misc.FlashLight.checkbox"] then return end
+	if exodium:ButtonDown(KEY_F) then if CUserCmd_CommandNumber(cmd) % Derama.ConfigTable["Movementflashspamm.slider"] == 0 then CUserCmd_SetImpulse(cmd, 100) end end
+end
+
+function Misc.CameraSpam(cmd)
+	if not Derama.ConfigTable["Misc.camera.checkbox"] then return end
+end
+
+function Misc.NameChanger()
+	if not Derama.ConfigTable["Misc.NameChanger.checkbox"] then return end
+	if exodium:ButtonDown(KEY_ENTER) then API.ChangeName(Derama.ConfigTable["Misc.NameChanger.textentry"], true, true) end
+end
+
+--[[
+
+Movement Functions
+
+]]
+
+local ShouldSpawn = true
+
+function Movement:propSpawner()
+    if not Derama.ConfigTable["Movement.spawnwheel.checkbox"] then return end
+    local PropKey = Derama.ConfigTable["Movement.spawnwheel.binder"]
+    if exodium:ButtonDown(PropKey) and ShouldSpawn then
+        exodium:RunCommand("gm_spawn",Derama.ConfigTable["movement.prop.name"])//"models/props_phx/construct/metal_angle360.mdl")
+    end
+end
+
+function Movement.RealPoopAirStuck(cmd)
+    if not Derama.ConfigTable["Movement.Air.Stuck.Peek"] then return end
+
+	if exodium:ButtonDown(Derama.ConfigTable["Movement.Air.Stuck.binder"]) then
+		API.NetChannel_SetOutSequenceNumber(API.NetChannel_GetOutSequenceNumber() + 70)
+	end
+end
+
+function Movement.GetMoveVector(cmd)
+	return Vector(CUserCmd_GetForwardMove(cmd), CUserCmd_GetSideMove(cmd), 0)
+end
+
+function Movement.AutoStrafe(cmd)
+	local vVelocity = LPLY:GetVelocity()
+	local flSpeed = vVelocity:Length2D()
+	local flMaxSideMove = cl_sidespeed:GetFloat()
+	local flMaxForwardMove = cl_forwardspeed:GetFloat()
+	if Derama.ConfigTable["Movement.Select.bhop"].Option == "Rage" then
+		local flMouseX = CUserCmd_GetMouseX(cmd)
+		if flMouseX > 0 then
+			CUserCmd_SetSideMove(cmd,flMaxSideMove)
+		elseif flMouseX < 0 then
+			CUserCmd_SetSideMove(cmd,-flMaxSideMove)
+		end
+
+		if CUserCmd_KeyDown(cmd,IN_JUMP) then
+			CUserCmd_SetForwardMove(cmd,(flMaxForwardMove * 0.5) / flSpeed)
+			CUserCmd_SetSideMove(cmd, CUserCmd_CommandNumber(cmd) % 2 == 0 and -flMaxSideMove or flMaxSideMove)
+		end
+	elseif Derama.ConfigTable["Movement.Select.bhop"].Option == "Directional" then
+		local vMove = Vector(flMaxSideMove, 0, 0)
+		local qMoveAngle = vMove:Angle()
+		local qOmniAngle = Movement.GetMoveVector(cmd):Angle()
+		qMoveAngle.y = qMoveAngle.y + qOmniAngle.y
+		vVelocity.z = 0
+		local qDirection = vVelocity:Angle()
+		qDirection = qDirection + qOmniAngle
+		exodium.NormalizeAngle(qDirection.y)
+		local flVeloDiff = exodium.AngleDifference(CUserCmd_GetViewAngles(cmd).y, qDirection.y)
+		exodium.NormalizeAngle(flVeloDiff)
+		if flVeloDiff > 0 then
+			qMoveAngle.y = qMoveAngle.y + (-90 + flVeloDiff)
+		elseif flVeloDiff < 0 then
+			qMoveAngle.y = qMoveAngle.y + (90 + flVeloDiff)
+		else
+			qMoveAngle.y = qMoveAngle.y + (flVeloDiff + CUserCmd_CommandNumber(cmd) % 2 == 0 and 90 or -90)
+		end
+
+		vMove = qMoveAngle:Forward()
+		vMove:Mul(flMaxSideMove)
+		CUserCmd_SetForwardMove(cmd,vMove.x)
+		CUserCmd_SetSideMove(cmd,vMove.y)
+	end
+end
+
+function Movement.AutoJump(cmd)
+	if not Derama.ConfigTable["Movement.movement.autojump"] then return end
+    if exodium:MovementTypeCheck() then return end
+
+	if LPLY:WaterLevel() > 0 then return end
+	if CUserCmd_KeyDown(cmd,IN_JUMP) and not LPLY:IsOnGround() then OriginalRemoveKey(cmd, IN_JUMP) end
+	if Derama.ConfigTable["Movement.movement.autojump"] and not LPLY:IsOnGround() then
+		Movement.AutoStrafe(cmd)
+	end
+end
+
+--FixMovementShit
+local function FixShit(cmd)
+	if Derama.ConfigTable["Aim.EnginePred.checkbox"] then API.StartPrediction(cmd) end
+	SUPEREPICAIMER9000(cmd)
+	if Derama.ConfigTable["Aim.EnginePred.checkbox"] then API.EndPrediction() end
+	Rage.AntiAim(cmd)
+	if Derama.ConfigTable["Aim.FixShit.checkbox"] then FixMovement(cmd, LPLY:EyeAngles()) end
+end
+
+C_UserCmd.SetViewAngles = function(...)// OFC FROM ZENITH IM TO FUCKING NIGGER STUPED HEHEHEHEHEEH
+    local Info = debug.getinfo(2)
+    if (Derama.ConfigTable["Aim.Recoil.combobox"] and string.EndsWith(Info.short_src, "arccw/shared/sh_move.lua") and Info.Currentline == 193) then 
+        return 
+    end
+    return C_UserCmdCopy.SetViewAngles(...)
+end
+
+
+--end of functions
+local function LoadFuncsHooks()
+    --this is NOT gonna get spammed so dont worry hehehehehe
+    exodium:RunCommand("cl_interp_ratio", 0)
+    exodium:RunCommand("cl_interp", 0)
+    exodium:RunCommand("cl_cmdrate", 100000)
+    exodium:RunCommand("cl_updaterate", 100000)
+
+	API.Callbacks.Add("Hook::CreateMove", "CMove", function(cmd)
+        if exodium:AlivCheck() then return end
+
+		Misc.Interpolation()
+        Misc:WeedMenu()
+        Misc:BitcoinGrabber()
+
+		if CUserCmd_CommandNumber(cmd) == 0 then return end
+
+        Movement:propSpawner()
+
+		Aim:forwardtrackingwarning()
+        Rage.SimTime(cmd)
+		Movement.AutoJump(cmd)
+		Misc.NameChanger()
+		Misc.SpammM1(cmd) 
+		Aim.Triggerbot(cmd)
+		Misc:VapeGOGREEEEEN(cmd)
+		Misc.FlashLightspam(cmd)
+		Misc.CameraSpam(cmd)
+		Rage.Sequencem()
+		Rage.DoubleTap(cmd)
+		Movement.RealPoopAirStuck(cmd)
+
+		SendPacket = true
+
+        Rage.FakeLag(cmd)
+		Rage.FakeDuck(cmd)
+		FixShit(cmd)
+
+		Rage.DumpBot()
+
+		if SendPacket then
+            ChokePackets = 0
+            RealAngle.p = exodium.NormalizeAngle(CUserCmd_GetViewAngles(cmd).p)
+            RealAngle.y = exodium.NormalizeAngle(CUserCmd_GetViewAngles(cmd).y)
+            FakeAnglePos = LPLY:GetPos()
+		else
+		    ChokePackets = ChokePackets + 1
+            FakeAngle.p = exodium.NormalizeAngle(CUserCmd_GetViewAngles(cmd).p)
+		    FakeAngle.y = exodium.NormalizeAngle(CUserCmd_GetViewAngles(cmd).y)
+            FakeAnglePos = LPLY:GetPos()
+		end
+
+        MultiplayerAnimState:SetAnimations(Angle(FakeAngle.p,FakeAngle.y),LP_FAKE)
+        MultiplayerAnimState:SetAnimations(Angle(RealAngle.p,RealAngle.y),LP_REAL)
+
+        MultiplayerAnimState.Instances[LP_REAL].EyePitch = exodium.NormalizeAngle(CUserCmd_GetViewAngles(cmd).p)
+		MultiplayerAnimState.Instances[LP_REAL].EyeYaw = exodium.NormalizeAngle(CUserCmd_GetViewAngles(cmd).y)
+
+        MultiplayerAnimState.Instances[LP_FAKE].EyePitch = FakeAngle.p
+		MultiplayerAnimState.Instances[LP_FAKE].EyeYaw = FakeAngle.y
+
+		API.SendPacket(SendPacket)
+		if Derama.ConfigTable["Aim.slAngles.checkbox"] then return false end
+	end)
+
+	local function AwesomePaintStuff(panel)
+		if not IsValid(panel) then return end
+		if not panel:IsVisible() then return end
+		panel:PaintManual()
+		panel:SetPaintedManually(true)
+		for k, v in pairs(panel:GetChildren()) do
+			if IsValid(v) and v:IsVisible() then
+				AwesomePaintStuff(v)
+				if IsValid(v.Menu) and v:IsMenuOpen() then
+					local Children = v.Menu:GetCanvas():GetChildren()
+					v.Menu:PaintManual()
+					v.Menu:SetPaintedManually(true)
+					for Index, Child in SortedPairs(Children, false) do
+						if IsValid(Child) and Child:IsVisible() then AwesomePaintStuff(Child) end
+					end
+				end
+			end
+		end
+	end
+
+	--[[
+    hook.Add("CalcViewModelView", "ViewModelView", function(Weapon, ViewModel, OldPos, OldAngle, EyePos, EyeAngle)
+            if Derama.ConfigTable["Visuals.viewmodelPostion.combobox"] then
+                local OverridePos = Vector(Derama.ConfigTable["Visuals.ViewModelx.slider"], Derama.ConfigTable["Visuals.ViewModely.slider"], Derama.ConfigTable["Visuals.ViewModelz.slider"])
+                local OverrideAngle = Angle(0, 0, 0)
+
+                EyeAngle = EyeAngle * 1
+
+                EyeAngle:RotateAroundAxis(EyeAngle:Right(), OverrideAngle.x * 1.0)
+                EyeAngle:RotateAroundAxis(EyeAngle:Up(), OverrideAngle.y * 1.0)
+                EyeAngle:RotateAroundAxis(EyeAngle:Forward(), OverrideAngle.z* 1.0)
+
+                EyePos = EyePos + OverridePos.x * EyeAngle:Right() * 1.0
+                EyePos = EyePos + OverridePos.y * EyeAngle:Forward() * 1.0
+                EyePos = EyePos + OverridePos.z * EyeAngle:Up() * 1.0 
+
+            end
+            return EyePos, EyeAngle
+
+    end)
+    ]]
+
+    hook.Add("CalcView", "Calc", function(ply, origin, angles, fov, znear, zfar)
+        local view = {
+            origin = origin,
+            angles = angles ,
+            fov = fov,
+            drawviewer = false
+        }
+        if Derama.ConfigTable["Visuals.norecoil.CheckBox"] then view.angles = angles - Get_ViewPunc(LPLY) end
+		if Derama.ConfigTable["Visuals.fov.combobox"] then view.fov = Derama.ConfigTable["Visuals.fov.slider"] end
+		if Derama.ConfigTable["Visuals.thirdperson.CheckBox"] then
+			IsThirdPerson = true
+			view.drawviewer = true
+			view.origin = origin - (angles:Forward() * Derama.ConfigTable["Visuals.thirdpersonfov.slider"])
+        else
+            IsThirdPerson = false
+		end
+        return view
+    end)
+
+	API.Callbacks.Add("Hook::PostRender", "PostRender", function()
+		exodium.Nots()
+
+		local ss = API.IsBeingScreengrabbed()
+
+		if ss then exodium.Notifications("Screengrab Detected!", Color(255, 200, 0), true) end
+
+		Visuals.UseLessShit()
+
+        exodium:Start3D()
+
+        Visuals.BulletTracers()
+        Visuals:BulletImpacts()
+
+        cam_End3D()
+
+		exodium:Start3D()
+		exodium:Start2D()
+
+		Visuals.Chams()        
+
+	    if Derama.ConfigTable["Visuals.Chams.checkbox"] then
+		    Visuals:FixChams()
+        end
+
+		Visuals.ESPNSHIT()
+		Visuals.ExodiumHUDS()
+		Aim.AimbotFov()
+		Aim.SnapLine()
+		AwesomePaintStuff(Menu.Frame)
+		AwesomePaintStuff(Menu.ListBackground)
+
+		cam_End2D()
+		cam_End3D()
+
+		Menu.Toggle()
+		Util.UpdateButtons()
+		Render_SetRenderTarget(nil)
+	end)
+
+    local ExodiumHookings = {
+		["player_hurt"] = function(data) Visuals.HitSoundsAndKillSounds(data) end,  
+		["Move"] = function()
+			if not IsFirstTimePredicted() then return end
+			flNextBulletTime = CurTime() + TICK_INTERVAL
+		end,
+        ["RenderScene"] = function()
+            Rage.Resolver()
+        end,
+		["PrePlayerDraw"] = function(player) 
+            //MultiplayerAnimState:OnPrePlayerDraw(player,LP_FAKE)
+            MultiplayerAnimState:OnPrePlayerDraw(LPLY,LP_REAL)
+        end,
+        ["PostPlayerDraw"] = function(player)
+            //MultiplayerAnimState:OnPostPlayerDraw(player,LP_FAKE)
+            MultiplayerAnimState:OnPostPlayerDraw(LPLY,LP_REAL)
+        end, 
+		["PreDrawViewModel"] = function(vm, ply, weapon) Visuals.WeaponChams() end,
+		["PostDrawViewModel"] = function(vm, ply, weapon) Visuals.WeaponChams2() end,
+		["PostDraw2DSkyBox"] = function()
+			Visuals.SkyBoxChanger()
+			Visuals.SkyboxColorChanger()
+		end,
+		["UpdateAnimation"] = function(wep, vel, maxSeqGroundSpeed) end
+	}
+
+	API.Callbacks.Add("Hook::FireBullets", "Nospread", function(ent, bul)
+		local spread = bul.m_vecSpread
+		local class = LPLY:GetActiveWeapon():GetClass()
+		if not NS.wepcone[class] or (LPLY:GetActiveWeapon():IsScripted() and NS.wepcone[class] ~= spread) then NS.wepcone[class] = spread end
+	end)
+
+    API.Callbacks.Add("Hook::DoImpactEffect", "DoImpactEffect", function(trace)    
+        Visuals:DoImpactEffect(trace)
+    end)
+
+	API.Callbacks.Add("Hook::Call", "LookupTable", function(Hook, ...) if ExodiumHookings[Hook] then ExodiumHookings[Hook](...) end end)
+
+	exodium.Notifications("ExodiumV3 loaded!", Color(255, 0, 0))
+	exodium.Notifications("Hello " .. LPLY:Name(), Color(255, 255, 255))
+end
+
+LoadFuncsHooks()
